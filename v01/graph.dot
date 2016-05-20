@@ -1,0 +1,28 @@
+digraph taskgraph {
+	T0 [label= "T0\n load: 0.0975"];
+	T0 -> T1[label=0];
+	T0 -> T5[label=5];
+	T1 [label= "T1\n load: 0.2225"];
+	T1 -> T2[label=1];
+	T1 -> T3[label=2];
+	T1 -> T9[label=14];
+	T2 [label= "T2\n load: 0.16"];
+	T2 -> T3[label=3];
+	T2 -> T4[label=4];
+	T2 -> T5[label=6];
+	T2 -> T7[label=11];
+	T2 -> T8[label=13];
+	T3 [label= "T3\n load: 0.2325"];
+	T3 -> T7[label=9];
+	T4 [label= "T4\n load: -0.0475"];
+	T4 -> T5[label=7];
+	T5 [label= "T5\n load: -0.1375"];
+	T5 -> T6[label=8];
+	T5 -> T7[label=10];
+	T6 [label= "T6\n load: -0.1975"];
+	T7 [label= "T7\n load: 0.14"];
+	T7 -> T8[label=12];
+	T8 [label= "T8\n load: 0.2325"];
+	T8 -> T9[label=15];
+	T9 [label= "T9\n load: -0.2475"];
+}

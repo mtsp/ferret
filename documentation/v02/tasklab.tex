@@ -1,0 +1,233 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Vertical Line Title Page 
+% LaTeX Template
+% Version 1.0 (27/12/12)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% Peter Wilson (herries.press@earthlink.net)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+% 
+% Instructions for using this template:
+% This title page compiles as is. If you wish to include this title page in 
+% another document, you will need to copy everything before 
+% \begin{document} into the preamble of your document. The title page is
+% then included using \titleGM within your document.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+% To turn comments OFF simply comment out the \Commentstrue line
+%\usepackage{xcolor}
+\newif\ifComments
+\Commentstrue
+
+\ifComments
+\newcommand{\chek}[1]{\noindent\textcolor{red}{Check: {#1}}}
+\newcommand{\isadora}[1]{\noindent\textcolor{violet}{Isadora: {#1}}}
+\newcommand{\guido}[1]{\noindent\textcolor{magenta}{Guido: {#1}}}
+\newcommand{\joao}[1]{\noindent\textcolor{brown}{Joao: {#1}}}
+\newcommand{\del}[1]{\noindent\textcolor{gray}{Removed: {#1}}}
+\newcommand{\new}[1]{\noindent\textcolor{blue}{ {#1}}}
+\newcommand{\ed}[1]{\noindent\textcolor{red}{ {#1}}}
+\else
+\newcommand{\chek}[1]{}
+\newcommand{\isadora}[1]{}
+\newcommand{\guido}[1]{}
+\newcommand{\joao}[1]{}
+\newcommand{\del}[1]{}
+\newcommand{\new}[1]{#1}
+\newcommand{\ed}[1]{#1}
+\fi
+
+\documentclass{article}
+
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{epsfig}
+\usepackage{graphics, float}
+\usepackage{color, soul}
+\usepackage{multirow}
+
+\newcommand*{\plogo}{\fbox{$\mathcal{PL}$}} % Generic publisher logo
+\newcommand{\hlc}[2][yellow]{ {\sethlcolor{#1} \hl{#2}} }
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\newcommand*{\titleGM}{\begingroup % Create the command for including the title page in the document
+\hbox{ % Horizontal box
+	\hspace*{0.2\textwidth} % Whitespace to the left of the title page
+	\rule{1pt}{\textheight} % Vertical line
+	\hspace*{0.05\textwidth} % Whitespace between the vertical line and title page text
+	\parbox[b]{0.85\textwidth}{ % Paragraph box which restricts text to less than the width of the page
+		
+		{\noindent\Huge\bfseries TaskLab Library }\\[2\baselineskip] % Title
+		{\large \textit{API Specification \\ Release v0.1}}\\[4\baselineskip] % Tagline or further description
+		{\Large \textsc{Unicamp Team}\\} % Author name
+		{\date{}}
+		
+		\vspace{0.5\textheight} % Whitespace between the title block and the publisher
+		%{\noindent The Publisher \plogo}\\[\baselineskip] % Publisher and logo
+	}}
+	\endgroup}
+
+\newcommand{\colorbitbox}[3]{%
+	\rlap{\bitbox{#2}{\color{#1}\rule{\width}{\height}}}%
+	\bitbox{#2}{#3}}
+
+%----------------------------------------------------------------------------------------
+%	BLANK DOCUMENT
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+\pagestyle{empty} % Removes page numbers
+
+\titleGM % This command includes the title page
+
+\section{Introduction} \label{sec:int}
+TaskLab was designed to enable the simulation of task parallelism applications. It  is connected to the task runtime (e.g. MTSP in Figure \ref{fig:arch}) through a set of functions calls which are described in the sections below. 
+
+TaskLab can be useful  to perform a number of jobs related to task parallelism like: (a) Measure the performance of a given runtime and compare it with other libraries; (b) Check for correctness in the execution of applications in a given platform; and (c) Allow configurable benchmarking without relying in real applications. To enable such jobs TaskLab offers the following functions to the runtime designer: 
+
+\begin{itemize}
+\item Generate, by the user parameters, a directed acyclic graph (DAG) that would represent an arbitrary application with task parallelism;
+\item Serialize the generated DAG, allowing it to be reproduced repeatedly;
+\item Visualize the simulated application by a by generating and plotting its corresponding \textit{.dot} file;
+\item Communicate directly with the runtime in order to execute the generated DAG file;
+\item Faster and practical performance analysis of both the application and the runtime.
+\end{itemize}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=13cm]{figures/MTSP-Driver.pdf}
+  \caption{Architecture of the MTSP runtime and its interface to the TGA driver \cite{TIOGA} and hardware module. The runtime establish a communication between the runtime, driver and TGA by a Runtime-Library interface and TaskLab is able to talk to the runtime throught the upper level. }
+  \label{fig:arch}
+\end{figure}
+
+\section{TaskLab API}
+
+The following TaskLab API describes version 0.1. It consists of a single file, \textbf{TaskLab.h}, which contains the DAG generation and the dispatcher to the runtime, along with methods regarding visualization and serialization.
+
+\subsection{TaskLab data-structures} 
+
+\isadora{Still needs to define data regarding task trace}
+
+\begin{verbatim}
+class TaskLab {
+  TaskGraph* tg;
+  private std::unique_ptr<TaskTrace> tt; (TBD) // to be defined
+}
+\end{verbatim}
+
+% typedef struct task_s {
+%     uint16_t    tID;     //hardware internal task ID
+%     uint64_t    WDPtr;   //address pointing to the task function
+%     int         ndeps;   //number of dependencies of the task
+%     dep*        deparr;  //list of dependencies of the task
+% } task; 
+
+\begin{verbatim}
+typedef struct task_s {
+  std::list<dep> predecessors;  // predecessors tasks
+  std::list<dep> successors;    // by default, all successor tasks are OUT
+
+  uint32_t tID;                 // index of task
+
+  uint32_t npred;               // total number of predecessors
+  float    load;                // how long should the task remain on load
+} task;
+
+\end{verbatim}
+
+% typedef struct dep_s {
+%     uint64_t     varptr;  //address of the dependency variable
+%     uint8_t      mode;    //mode of the variable 
+% } dep; 
+
+\begin{verbatim}
+typedef struct dep_s {
+  uint32_t task;  // task that the dependency is heading towards to
+  uint8_t  type;  // type of dependency
+  uint32_t dID;   // index of dependency
+} dep;
+\end{verbatim}
+
+\begin{verbatim}
+class TaskGraph {
+  private:
+    std::vector<task> tasks;        // tasks structure
+    uint32_t  ntasks;               // total number of tasks
+    uint32_t  ndeps;                // total number of dependencies between tasks
+    uint32_t  dep_r;                // max range of how far a predecessor may be
+    uint32_t  exec_t;               // standard execution time per task (ms)
+    float     max_r;                // max. range from standard load time (0 to 1)
+}
+\end{verbatim}
+
+\subsection{TaskLab methods}
+Below is the list of public and private functions available in TaskLab.
+
+\begin{itemize}
+\item \texttt{void TaskLab::save(const char* filename);} \newline
+This method is responsible for saving a graph as a \textit{.dat} file, by serializing it. It takes as parameter the \texttt{filename} of the serialized graph file.
+
+\item \texttt{void TaskLab::restore(const char* filename)} \newline
+This method is responsible for retrieving a graph stored as a \textit{.dat} file, by deserializing it. It takes as parameter the \texttt{filename} of the serialized graph file.
+
+\item \texttt{void TaskLab::plot(const char* filename)} \newline
+Method responsible for saving a graph as a \textit{.dot} file, allowing to visualize it. It takes as parameter the corresponding \texttt{filename} of the graph.
+
+\item \texttt{\noindent void TaskLab::generate \newline
+(const uint32\_t n, const uint32\_t m, const uint32\_t d, \newline
+ const uint32\_t t, const float r)} \newline
+Method responsible for generating the DAG that represents the application with task parallelism to be simulated. The parameters requires by the graph generation method are described below; notice that all the optional parameters have a default value, which can be defined by the user.
+\begin{itemize}
+\item \texttt{n} is the number of tasks to be generated; 
+\item \texttt{m} is the maximum number of IN/INOUT dependencies that has to be created on each task, minimum is 1 by default; 
+\item \texttt{d} sets how far a predecessor may be from a parent (optional); 
+\item \texttt{t} is is the standard execution time per task (ms) (optional); 
+\item \texttt{r} is the maximum range from standard load time (from 0 to 1) (optional). 
+\end{itemize}
+
+\item \texttt{void TaskLab::dispatch(const uint8\_t rt)} \newline
+Method responsible for dispatching a graph to the \texttt{rt} runtime, displaying on-the-fly information about tasks, and whether they simulation runs correctly. The success is defined by checking if the graph was executed in the appropriate order. The dispatcher communicates with the runtime by calling its functions in order to describe each of the graph tasks and execute them. Each task triggers an arbitrary function that simply awaits for the given load time.
+
+\item \texttt{void TaskLab::burnin(const uint32\_t nruns, const uint32\_t max\_t, const uint8\_t rt)} \newline
+This method is responsible for generating and dispatching to the \texttt{rt} runtime a total of \texttt{nruns} random task graphs, within a limit of \texttt{max\_t} tasks for each graph. It displays the output for each task graph executed and if the simulation ran correctly.
+
+\isadora{Still to be defined. Is it necessary to keep a TaskTrace structure in order to talk with the runtime? Another option is to save it as TaskTrace and then translates to TaskGraph.}
+\item \texttt{void TaskLab::recordTrace(task t)} (TBD) \newline
+This method records a task and save it into the graph.
+
+% \item \texttt{bool TaskLab::runTrace(TaskTrace* t)} (TBD) \newline
+% This method dispatches a previously task trace \texttt{t} captured from the execution of a particular program and runs it on the runtime. It returns true if the trace executed correctly and false otherwise.
+\end{itemize}
+
+\subsection{Task graph generation procedure}
+The generation of the task graph works as follows: first, the graph is created with \texttt{n} tasks, specified by the user. For each created task: a random load time is assigned according to the \texttt{default load time} and its \texttt{maximum range} - for example, if the default load time is 1000 ms and the load range is 0.25, it may vary from 750ms to 1250ms; a random number of dependencies is created, ranging from 1 to \texttt{maximum}, also specified by the user.   Then, each dependency in the task is described as follows: a unique id is assigned, for later on purposes; a predecessor that haven't been picked yet is selected, which its \texttt{maximum distance} is defined according to the parameter of dependency range; the predecessor task receives an OUT dependency, with the same id as the successor dependency, relating both tasks; finally, the dependency is assigned as IN or INOUT, randomly. 
+
+\subsection{Task graph validation procedure}
+The execution of the graph is validated by creating a boolean list with all the dependencies of the graph based on its unique id, assigned initially to false. It consists of: when a task executes, it assigns all of its successors' dependency as true. Then, if a task executes and all of its predecessors' dependency is defined as true, it means that is safe to execute, i.e. all of its father tasks have already executed; otherwise, the execution is not correct. If every task executed correctly, it means that the graph is validated and successfully executed.
+
+\section{Next Steps}
+The v0.2 release of the TaskLab is currently user development. Some features that it will provide are:
+ \begin{itemize}
+\item Compatibility with other runtimes;
+\item More customization regarding graph generation;
+\item Trace capture, storage and replay of task  execution. 
+\end{itemize}
+
+\bibliography{bib/tasklab} 
+\bibliographystyle{ieeetr}
+
+\end{document}

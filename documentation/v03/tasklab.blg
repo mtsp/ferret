@@ -1,0 +1,48 @@
+This is BibTeX, Version 0.99d (TeX Live 2013/Debian)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: tasklab.aux
+The style file: ieeetr.bst
+Database file #1: bib/tasklab.bib
+Warning--empty journal in TIOGA
+You've used 1 entry,
+            1876 wiz_defined-function locations,
+            482 strings with 3520 characters,
+and the built_in function-call counts, 152 in all, are:
+= -- 10
+> -- 4
+< -- 0
++ -- 2
+- -- 1
+* -- 9
+:= -- 32
+add.period$ -- 1
+call.type$ -- 1
+change.case$ -- 1
+chr.to.int$ -- 0
+cite$ -- 2
+duplicate$ -- 9
+empty$ -- 18
+format.name$ -- 1
+if$ -- 31
+int.to.chr$ -- 0
+int.to.str$ -- 1
+missing$ -- 1
+newline$ -- 6
+num.names$ -- 1
+pop$ -- 6
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 1
+stack$ -- 0
+substring$ -- 0
+swap$ -- 0
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 1
+while$ -- 1
+width$ -- 2
+write$ -- 9
+(There was 1 warning)

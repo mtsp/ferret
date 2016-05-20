@@ -1,0 +1,57 @@
+1) criar uma aplicação "taquaral":
+    > OK uma espécie de gdb
+    > OK como rodar uma aplicação dentro do programa
+    
+2) novos métodos
+    > OK. terá watchEvent(u8 t) (que será uma espécie de watchpoint), podendo incluir tasks ou outros watchpoints que o usuário gostaria de dar "record".
+    > OK. hasEvent(), com eventos que o usuário gostaria de observar
+    > OK. eventOcurred(u8 t, void* x) que registra o evento que ocorreu e manda para o runtime registrar
+
+3) estruturas
+    > OK para efeitos de comunicação, recebe estruturas de dep e task como as da library do TGA
+
+4) lidar com casos de erro em restore(), save() e plot()
+    > OK. as operações são lidadas (caso possível)ou abortadas e notificadas ao usuário.
+
+    > OK. Lidar caso restore/save não ocorreu corretamente (retorno no ferret).
+
+---------
+1) Incluir códoigo que dá translate para packets:
+#ifdef __TRACE
+    static FILE * fp;
+    static bool first = true;
+    unsigned long long packet;
+
+    if (first)
+    {
+        first = false;
+        fp = fopen("task_dump.txt", "w");
+    }
+
+    create_task_packet(packet, 0, (ndeps == 0), new_task->routine);
+    fprintf(fp, "%llx\n", packet);
+
+    for (kmp_int32 i=0; i<ndeps; i++) {
+        unsigned char mode = dep_list[i].flags.in | (dep_list[i].flags.out << 1);
+
+        create_dep_packet(packet, mode, (i == (ndeps-1)), dep_list[i].base_addr);
+        fprintf(fp, "%llx\n", packet);
+    }
+#endif
+
+> compila com a flag -D__TRACE
+mtsp-tasklab: CFLAGS += -D__TRACE
+
+mtsp-tasklab: ...
+    g++ ...
+
+> incluir hws.h para macros
+
+2) OBS:
+    scp -P6868 DOOM1.WAD isadora.sophia@ssh.lsc.ic.unicamp.br:/home/isadora.sophia/
+    ssh linaro@10.68.30.43
+
+Observações (para versão 0.3):
+3) Trace só ocorre com aplicações reais.
+
+4) Low level só está disponível para aplicações reais.
