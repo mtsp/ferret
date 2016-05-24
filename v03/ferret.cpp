@@ -26,7 +26,7 @@ typedef enum { UINT, FLOAT, RUNTIME, EVENT, PLOT } tp;
 void instructions() {
     std::cout << "Available options:\n";
     std::cout << " \"generate\" or \"g\" in order to generate a random task graph;\n";
-    std::cout << " \"run\"      or \"r\" in order to run a current loaded task graph.;\n";
+    std::cout << " \"run\"      or \"r\" in order to run a current loaded task graph;\n";
     std::cout << " \"burnin\"   or \"b\" in order to generate multiple task graphs and run them;\n";
     std::cout << " \"trace\"    or \"t\" in order to trace a program;\n";
     std::cout << " \"save\"     or \"s\" to save a current loaded task graph;\n";

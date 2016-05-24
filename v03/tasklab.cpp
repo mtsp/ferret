@@ -16,10 +16,14 @@ typedef void *(*ta_t)(ident*, kmp_int32, kmp_int32, kmp_uint32, kmp_uint32, kmp_
 typedef void  (*td_t)(ident*, kmp_int32, kmp_task*, kmp_int32, kmp_depend_info*, kmp_int32, kmp_depend_info*);
 typedef void  (*tw_t)(ident*, kmp_int32);
 
+typedef void *(*tf)  ();
+
 fc_t fork_call          = NULL;
 ta_t omp_task_alloc     = NULL;
 td_t omp_task_with_deps = NULL;
 tw_t omp_taskwait       = NULL;
+
+tf   pretty_dump        = NULL;
 
 /* ***************
  * Task structure handler
@@ -687,6 +691,7 @@ bool TaskLab::init_run(const uint8_t rt) {
         omp_task_alloc     = (ta_t)dlsym(RTLD_NEXT, "__kmpc_omp_task_alloc");
         omp_task_with_deps = (td_t)dlsym(RTLD_NEXT, "__kmpc_omp_task_with_deps");
         omp_taskwait       = (tw_t)dlsym(RTLD_NEXT, "__kmpc_omp_taskwait");
+        pretty_dump        = (tf)  dlsym(RTLD_NEXT, "pretty_dump");
     }
 
     /* Was everything ok? */
@@ -804,6 +809,8 @@ void TaskLab::microtask(int gid, int tid, void* param) {
         /* Finally, dispatch task! */
         std::cout << "\tdispatching task " << cur_task << "\n";
         omp_task_with_deps(NULL, 0, task, n_dep + 1, dep_list, 0, NULL);
+
+        pretty_dump();
 
         /* Clean up the mess */
         delete dep_list;
