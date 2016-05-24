@@ -16,14 +16,14 @@ typedef void *(*ta_t)(ident*, kmp_int32, kmp_int32, kmp_uint32, kmp_uint32, kmp_
 typedef void  (*td_t)(ident*, kmp_int32, kmp_task*, kmp_int32, kmp_depend_info*, kmp_int32, kmp_depend_info*);
 typedef void  (*tw_t)(ident*, kmp_int32);
 
-typedef void *(*tf)  ();
+typedef void  (*tp_t)();
 
 fc_t fork_call          = NULL;
 ta_t omp_task_alloc     = NULL;
 td_t omp_task_with_deps = NULL;
 tw_t omp_taskwait       = NULL;
 
-tf   pretty_dump        = NULL;
+tp_t pretty_dump        = NULL;
 
 /* ***************
  * Task structure handler
@@ -691,12 +691,12 @@ bool TaskLab::init_run(const uint8_t rt) {
         omp_task_alloc     = (ta_t)dlsym(RTLD_NEXT, "__kmpc_omp_task_alloc");
         omp_task_with_deps = (td_t)dlsym(RTLD_NEXT, "__kmpc_omp_task_with_deps");
         omp_taskwait       = (tw_t)dlsym(RTLD_NEXT, "__kmpc_omp_taskwait");
-        pretty_dump        = (tf)  dlsym(RTLD_NEXT, "pretty_dump");
+        pretty_dump        = (tp_t)dlsym(RTLD_NEXT, "pretty_dump");
     }
 
     /* Was everything ok? */
     if (omp_task_alloc == NULL || omp_task_with_deps == NULL
-        || omp_taskwait == NULL) {
+        || omp_taskwait == NULL || pretty_dump == NULL) {
         /* Failed */
         fprintf(stderr, "Please, set LD_PRELOAD accordingly to your runtime.\n");
 
