@@ -49,7 +49,7 @@
 #define EVENT_S                  3                 // total events+1: HTASK LTASK
 
 /// Uncomment to enter DEBUG mode
-// #define DEBUG                    1
+#define DEBUG                    1
 
 /* ***************
  * Trace definitions

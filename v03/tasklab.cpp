@@ -837,12 +837,22 @@ void TaskLab::f(tparam_t param) {
         foo++;
     }
 
+#ifdef DEBUG
+    printf("Executing task no. %d.\n", param.tID);
+#endif
+
     // -- Compute if task execution is valid --
 
     // Check if all input dependencies are true (if in_s is 0, then cur will
     // be true as expected)
     for (uint i = 0; cur && i < param.pred_s; i++) {
         cur = cur && *(param.pred[i]);
+
+#ifdef DEBUG
+        if (!cur) {
+            printf("Error at dependency no. %d.", i);
+        }
+#endif
     }
 
     // Print error message if execution is incorrect
@@ -858,8 +868,9 @@ void TaskLab::f(tparam_t param) {
     }
 
     // Propagate whether current task execution is valid
-    for (uint i = 0; i < param.succ_s; i++)
+    for (uint i = 0; i < param.succ_s; i++) {
         *(param.succ[i]) = cur;
+    }
 }
 
 void TaskLab::ptask_f(kmp_int32 gtid, void* param) {
