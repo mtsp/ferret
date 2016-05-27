@@ -17,7 +17,8 @@
 #define INVALID 0
 #define EXIT   -1
 
-typedef enum { UINT, FLOAT, RUNTIME, EVENT, PLOT } tp;
+typedef enum { UINT, FLOAT, RUNTIME, EVENT, PLOT, TRACE } tp;
+typedef enum { APP = 1, TG = 2 } tr;
 
 /* ************************
  * Software interface
@@ -124,6 +125,17 @@ int read(const char* str, bool opt, uint8_t t, T* r) {
 
             }
 
+        } else if (t == tp::TRACE) {
+            if (strcasecmp("APPLICATION", buf) == 0 ||
+                strcasecmp("APP", buf) == 0 ||
+                strcasecmp("A", buf) == 0) {
+                *r = tr::APP;
+            }
+            else if (strcasecmp("TASKGRAPH", buf) == 0 ||
+                     strcasecmp("T", buf) == 0) {
+                *r = tr::TG;
+
+            }
         }
 
         if (*r == INVALID && !opt) {
@@ -253,27 +265,31 @@ int main (int argc, char* argv[]) {
 
             case 't':
                 {
-                uint8_t e, rt;
+                uint8_t o, e, rt;
                 char    a_path[128];
                 char    a_arg[128];
 
-                key_t    shmKEY;
-                int      shmID;
-                TaskLab* tl_t;
+                sprintf(buf, "\tType of tracing (taskgraph or application): ");
+                if (read(buf, false, tp::TRACE, &o) == EXIT) {
+                    break;
+                }
 
-                /* Get application path */
-                std::cout << "\tApplication to be traced (full path): ";
-                std::cin >> a_path;
+                /* Trace an application */
+                if (o == APP) {
+                    /* Get application path */
+                    std::cout << "\tApplication to be traced (full path): ";
+                    std::cin >> a_path;
 
-                /* Garbage */
-                getchar();
+                    /* Garbage */
+                    getchar();
 
-                /* Get application path */
-                std::cout << "\tApplication arguments (OPTIONAL): ";
-                fgets(a_arg, 128, stdin);
+                    /* Get application path */
+                    std::cout << "\tApplication arguments (OPTIONAL): ";
+                    fgets(a_arg, 128, stdin);
 
-                /* Garbage */
-                a_arg[strlen(a_arg) - 1] = '\0';
+                    /* Garbage */
+                    a_arg[strlen(a_arg) - 1] = '\0';
+                }
 
                 /* Get event type */
                 sprintf(buf, "\tEvent to be watched (high task or low task): ");
@@ -293,8 +309,13 @@ int main (int argc, char* argv[]) {
                 /* Set cmd */
                 sprintf(buf, "%s %s", a_path, a_arg);
 
-                /* Run! */
-                system(buf);
+                if (o == APP) {
+                    /* Run application! */
+                    system(buf);
+                } else {
+                    /* Run taskgraph! */
+                    tl.run(rt);
+                }
 
                 /* Clean environment variable */
                 setenv(EVT_VAR, "", true);

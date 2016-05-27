@@ -595,7 +595,7 @@ bool TaskLab::plot(const char* filename, const uint8_t fm) {
 
         std::vector<uint64_t>::iterator it;
         for (it = tg->ll.begin(); it != tg->ll.end(); ++it) {
-            ofs << *it << "\n";
+            ofs << std::hex << *it << "\n";
         }
 
         ofs.close();
@@ -691,12 +691,11 @@ bool TaskLab::init_run(const uint8_t rt) {
         omp_task_alloc     = (ta_t)dlsym(RTLD_NEXT, "__kmpc_omp_task_alloc");
         omp_task_with_deps = (td_t)dlsym(RTLD_NEXT, "__kmpc_omp_task_with_deps");
         omp_taskwait       = (tw_t)dlsym(RTLD_NEXT, "__kmpc_omp_taskwait");
-        pretty_dump        = (tp_t)dlsym(RTLD_NEXT, "pretty_dump");
     }
 
     /* Was everything ok? */
     if (omp_task_alloc == NULL || omp_task_with_deps == NULL
-        || omp_taskwait == NULL || pretty_dump == NULL) {
+        || omp_taskwait == NULL) {
         /* Failed */
         fprintf(stderr, "Please, set LD_PRELOAD accordingly to your runtime.\n");
 
@@ -809,8 +808,6 @@ void TaskLab::microtask(int gid, int tid, void* param) {
         /* Finally, dispatch task! */
         std::cout << "\tdispatching task " << cur_task << "\n";
         omp_task_with_deps(NULL, 0, task, n_dep + 1, dep_list, 0, NULL);
-
-        pretty_dump();
 
         /* Clean up the mess */
         delete dep_list;
