@@ -1,4 +1,8 @@
-MTSP_INC	= $(HOME)/mtsp/v06
+ifeq ($(HOSTNAME), linaro)
+	MTSP-INC = $(HOME)/Isaland/mtsp/v06
+else
+	MTSP_INC = $(HOME)/mtsp/v06
+endif
 
 CPPFLAGS	= -g -std=c++11 -I$(MTSP_INC) -fPIC
 LIB_FLAGS  	= -lm -ldl -lboost_serialization
@@ -12,18 +16,15 @@ all:
 	@make tasklab
 
 ferret: $(OBJS)
-	clang++ $(CPPFLAGS) $(OBJS) $@.cpp -o $@ $(LIB_FLAGS) 
+	g++ $(CPPFLAGS) $(OBJS) $@.cpp -o $@ $(LIB_FLAGS) 
 
 tasklab: $(OBJS)
-	clang++ $(CPPFLAGS) $(OBJS) -shared -o $(LIB_NAME) $(LIB_FLAGS) 
+	g++ $(CPPFLAGS) $(OBJS) -shared -o $(LIB_NAME) $(LIB_FLAGS) 
 
 %.o: %.cpp
-	clang++ -c $(CPPFLAGS) $(OPT_LVL) $< -o $@
+	g++ -c $(CPPFLAGS) $(OPT_LVL) $< -o $@
 
 clean:
 	rm -f *.o *.so ferret
  
 rebuild: clean all
-
-# toy:
-# 	clang++ -O3 -fopenmp -g toy1.cpp -o toy -lm

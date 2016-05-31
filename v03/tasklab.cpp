@@ -819,6 +819,14 @@ void TaskLab::microtask(int gid, int tid, void* param) {
     omp_taskwait(NULL, 0);
 
     std::cout << "\tDone executing!\n";
+
+    /* Free memory */
+    for (it = tg_t->tasks.begin(); it != tg_t->tasks.end(); ++it) {
+        uint32_t cur_task = it->tID; // task id
+
+        delete params[cur_task].pred;
+        delete params[cur_task].succ;
+    }
 }
 
 void TaskLab::f(tparam_t param) {
@@ -846,7 +854,12 @@ void TaskLab::f(tparam_t param) {
     // Check if all input dependencies are true (if in_s is 0, then cur will
     // be true as expected)
     for (uint i = 0; cur && i < param.pred_s; i++) {
-        cur = cur && *(param.pred[i]);
+        /* Check if it is a valid execution */
+        if (param.pred[i] == NULL) {
+            cur = false;
+        } else {
+            cur = cur && *(param.pred[i]);
+        }
 
 #ifdef DEBUG
         if (!cur) {
