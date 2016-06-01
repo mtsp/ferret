@@ -710,11 +710,15 @@ bool TaskLab::init_run(const uint8_t rt) {
 void TaskLab::microtask(int gid, int tid, void* param) {
     /* Variables that keep in track with the digraph 
      * workflow when dispatching */
-    bool       dep_chk[tg_t->ndeps];  /* Dependency validation (task graph) */
+    bool*      dep_chk; /* Dependency validation (task graph) */
 
-    bool       varptr[tg_t->nvar];    /* Pointer for variables addresses */
-    tparam_t   params[tg_t->ntasks];  /* Our own param. manager, will be 
-                                       * initialized later on */
+    bool*      varptr;  /* Pointer for variables addresses */
+    tparam_t*  params;  /* Our own param. manager, will be 
+                         * initialized later on */
+
+    dep_chk = new bool[tg_t->ndeps];
+    varptr  = new bool[tg_t->nvar];
+    params  = new tparam_t[tg_t->ntasks]; 
 
     memset(dep_chk, false, tg_t->ndeps * sizeof(bool));
     memset(varptr, false, tg_t->nvar * sizeof(bool));
@@ -827,6 +831,10 @@ void TaskLab::microtask(int gid, int tid, void* param) {
         delete params[cur_task].pred;
         delete params[cur_task].succ;
     }
+
+    delete dep_chk;
+    delete varptr;
+    delete params;
 }
 
 void TaskLab::f(tparam_t param) {
@@ -854,16 +862,11 @@ void TaskLab::f(tparam_t param) {
     // Check if all input dependencies are true (if in_s is 0, then cur will
     // be true as expected)
     for (uint i = 0; cur && i < param.pred_s; i++) {
-        /* Check if it is a valid execution */
-        if (param.pred[i] == NULL) {
-            cur = false;
-        } else {
-            cur = cur && *(param.pred[i]);
-        }
+        cur = cur && *(param.pred[i]);
 
 #ifdef DEBUG
         if (!cur) {
-            printf("Error at dependency no. %d.", i);
+            printf("Error at dependency no. %d.\n", i);
         }
 #endif
     }

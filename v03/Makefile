@@ -1,7 +1,7 @@
-ifeq ($(HOSTNAME), linaro)
-	MTSP-INC = $(HOME)/Isaland/mtsp/v06
+ifeq ($(HOSTNAME), chiclete)
+        MTSP-INC = $(HOME)/mtsp/v06
 else
-	MTSP_INC = $(HOME)/mtsp/v06
+        MTSP_INC = $(HOME)/Isaland/mtsp/v06
 endif
 
 CPPFLAGS	= -g -std=c++11 -I$(MTSP_INC) -fPIC
@@ -26,5 +26,6 @@ tasklab: $(OBJS)
 
 clean:
 	rm -f *.o *.so ferret
+
  
 rebuild: clean all
