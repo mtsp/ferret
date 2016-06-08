@@ -160,7 +160,7 @@ public:
 
     bool save(const char* filename);
     bool restore(const char* filename);
-    bool plot(const char* filename);
+    bool plot(const char* filename, const uint8_t info);
 
     bool empty(uint8_t evt);
 }
@@ -207,7 +207,9 @@ Save a graph as a \textit{.dat} file, by serializing it. It takes as parameter t
 This method is responsible for retrieving a graph stored as a \textit{.dat} file, by deserializing it. It takes as parameter the \texttt{filename} of the serialized graph file. Returns if deserialization was successful.
 
 \item \texttt{bool TaskLab::plot(const char* filename)} \newline
-Save a graph as a \textit{.dot} file, allowing to visualize it. It takes as parameter the corresponding \texttt{filename} of the graph. Returns if the plot went successful. 
+Save a graph as three specified formats: a \textit{.dot} file, allowing to visualize the task graph; a \textit{.tsk} file, displaying the low level trace information regarding the task graph (it implies that the task graph was previously traced); a \textit{.info} file, displaying information regarding the task graph, i.e. number of dependencies and tasks. 
+
+The method takes as parameter the corresponding \texttt{filename} of the graph. Returns if the plot was successful. 
 
 \item \texttt{bool TaskLab::empty(uint8\_t evt)} \newline
 Simply checks if TaskLab is empty, i.e. has a valid task graph structure of type \texttt{evt}.
@@ -289,7 +291,7 @@ Ferret is a TaskLab client created to enable a smoother communication between th
     & `Generate' in order to generate a random task graph;
     & `Run'      in order to run a current loaded task graph;
     & `Burnin'   in order to generate multiple task graphs and run them;
-    & `Trace'    in order to trace a program;
+    & `Trace'    in order to trace a program or a task graph;
     & `Save'     to save a current loaded task graph;
     & `Restore'  to restore and load a saved task graph;
     & `Plot'     to plot a current loaded task graph.
@@ -301,8 +303,7 @@ The v0.5 release of the TaskLab is currently under development. Some features th
 \item Compatibility with other runtimes;
 \item More customization regarding graph generation;
 \item More trace options;
-\item Enable to trace multiple options at the same time;
-\item Enable debugging/trace for generated task graphs, besides real applications.
+\item Enable to trace multiple options at the same time.
 \end{itemize}
 
 \bibliography{bib/tasklab} 
