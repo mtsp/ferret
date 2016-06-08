@@ -48,10 +48,13 @@ mtsp-tasklab: ...
 > incluir hws.h para macros
 
 2) OBS:
-    scp -P6868 DOOM1.WAD isadora.sophia@ssh.lsc.ic.unicamp.br:/home/isadora.sophia/
+    scp -P6868 libtioga.so isadora.sophia@ssh.lsc.ic.unicamp.br:/home/isadora.sophia/
     ssh linaro@10.68.30.43
 
 Observações (para versão 0.3):
 3) Trace só ocorre com aplicações reais.
 
 4) Low level só está disponível para aplicações reais.
+
+/* --- */
+5) implementar .info display dos tipos de dependências totais

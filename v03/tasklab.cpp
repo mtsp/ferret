@@ -826,8 +826,6 @@ void TaskLab::microtask(int gid, int tid, void* param) {
 
     std::cout << "\tDone executing!\n";
 
-    std::fflush(stdio);
-
     /* Free memory */
     for (it = tg_t->tasks.begin(); it != tg_t->tasks.end(); ++it) {
         uint32_t cur_task = it->tID; // task id

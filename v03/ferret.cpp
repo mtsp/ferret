@@ -192,21 +192,24 @@ int main (int argc, char* argv[]) {
                     break;
                 }
 
-                sprintf(buf, "\tHow far a predecessor may be from a parent: (OPTIONAL, default is %d) ", DEFAULT_DEP_RANGE);
+                sprintf(buf, "\tHow far a predecessor may be from a parent: \
+(OPTIONAL, default is %d) ", DEFAULT_DEP_RANGE);
                 if (read(buf, true, tp::UINT, &dep_range) == EXIT) {
                     break;
                 }
 
                 check(&dep_range, DEFAULT_DEP_RANGE);
 
-                sprintf(buf, "\tStandard execution per task, i.e. amount of iterations: (OPTIONAL, default is %d) ", DEFAULT_EXECUTION_SIZE);
+                sprintf(buf, "\tStandard execution per task, i.e. amount of \
+iterations: (OPTIONAL, default is %d) ", DEFAULT_EXECUTION_SIZE);
                 if (read(buf, true, tp::UINT, &exec_time) == EXIT) {
                     break;
                 }
 
                 check(&exec_time, DEFAULT_EXECUTION_SIZE);
 
-                sprintf(buf, "\tMax. range from standard execution size (0-1): (OPTIONAL, default is %0.2f) ", DEFAULT_EXECUTION_RANGE);
+                sprintf(buf, "\tMax. range from standard execution size (0-1): \
+(OPTIONAL, default is %0.2f) ", DEFAULT_EXECUTION_RANGE);
                 if (read(buf, true, tp::FLOAT, &exec_range) == EXIT) {
                     break;
                 }

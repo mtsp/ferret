@@ -1,5 +1,5 @@
 ifeq ($(HOSTNAME), chiclete)
-        MTSP-INC = $(HOME)/mtsp/v06
+        MTSP_INC = $(HOME)/mtsp/v06
 else
         MTSP_INC = $(HOME)/Isaland/mtsp/v06
 endif
