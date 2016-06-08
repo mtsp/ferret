@@ -4,9 +4,10 @@
  *
  * */
 
- #include "tasklab.h"
+#include "tasklab.h"
 
- #include <dlfcn.h> // find function symbols
+#include <cstdio>
+#include <dlfcn.h> // find function symbols
 
 /* ************************
  * Dispatch function symbols
@@ -217,7 +218,7 @@ void TaskGraph::add_task(task t) {
                 }
 
             } else if (out_map.find(cur_ptr) != out_map.end()) {
-                /* No previous reader. If I'm the last reader... */
+                /* No previous reader. If there is a last writer... */
                 uint32_t p_tID = out_map[cur_ptr].task; // parent task ID
                 uint32_t p_dID = out_map[cur_ptr].dID;  // parent dep. ID
 
@@ -282,7 +283,7 @@ void TaskGraph::add_task(task t) {
         /* -- add variable as a dependency to our final task */
         /* Successor dependency */
         _dep s_dep = {
-            0,                     // irrelevant, since it doesnt have to rely
+            0,                     // irrelevant, since it doesnt have to re
                                    // on a children task
             cur_mode,              // parent dependency type
             cur_dep,               // parent dependency ID
@@ -399,7 +400,8 @@ void TaskLab::burnin(const uint32_t nruns, const uint32_t max_t, const uint8_t r
             plot(add_extension(DEFAULT_NAME, gr_n), LL);
             plot(add_extension(DEFAULT_NAME, gr_n), INFO);
 
-            fprintf(stderr, "Execution failed!\n\tFile saved and plotted as '%s'.\n\n", gr_n);
+            fprintf(stderr, "Execution failed!\n\tFile saved and plotted as \
+'%s'.\n\n", gr_n);
         }
     }
 }
@@ -820,9 +822,11 @@ void TaskLab::microtask(int gid, int tid, void* param) {
     std::cout << "\tDone Dispatching!\n";
 
     // Wait until all tasks have been executed
-    omp_taskwait(NULL, 0);
+    omp_taskwait(nullptr, 0);
 
     std::cout << "\tDone executing!\n";
+
+    std::fflush(stdio);
 
     /* Free memory */
     for (it = tg_t->tasks.begin(); it != tg_t->tasks.end(); ++it) {
