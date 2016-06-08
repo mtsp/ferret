@@ -895,6 +895,7 @@ void TaskLab::ptask_f(kmp_int32 gtid, void* param) {
     kmp_task* t = (kmp_task*) param;
     mtsp_task_metadata* md = t->metadata;
 
+    /* --- correct this! --- */
     // get correct param
     tparam_t* p = (tparam_t*) md->dep_list[0].base_addr;
 
