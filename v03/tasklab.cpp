@@ -899,7 +899,9 @@ void TaskLab::ptask_f(kmp_int32 gtid, void* param) {
     // get correct param
     tparam_t* p = (tparam_t*) md->dep_list[0].base_addr;
 
-    f(*p);
+	printf("Executed with exec time no. %lf!\n", p->exec);
+
+    //f(*p);
 }
 
 /* Initialize static helper variables regarding dispatching */

@@ -1,7 +1,7 @@
 ifeq ($(HOSTNAME), chiclete)
         MTSP_INC = $(HOME)/mtsp/v06
 else
-        MTSP_INC = $(HOME)/Isaland/mtsp/v06
+        MTSP_INC = $(HOME)/Isaland/mtsp/integration
 endif
 
 CPPFLAGS	= -g -std=c++11 -I$(MTSP_INC) -fPIC
