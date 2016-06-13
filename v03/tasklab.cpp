@@ -895,11 +895,15 @@ void TaskLab::ptask_f(kmp_int32 gtid, void* param) {
     kmp_task* t = (kmp_task*) param;
     mtsp_task_metadata* md = t->metadata;
 
-    /* --- correct this! --- */
-    // get correct param
+    /* --- get param! --- */
     tparam_t* p = (tparam_t*) md->dep_list[0].base_addr;
+    
+    // tparam_t* t = (tparam_t**) *param;
+    // tparam_t* p = &t[0];
 
-    f(*p);
+    printf("execution time: %lf\n", p->exec);
+
+    //f(*p);
 }
 
 /* Initialize static helper variables regarding dispatching */
