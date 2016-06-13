@@ -1,6 +1,0 @@
-Task graph information:
-	Total no. of tasks:                     10000
-	Total no. of unique dependencies:       30000
-	Standard amount of iterations per task: 1000000
-	Minimum amount of iterations is:        1250000
-	Maximum amount of iterations is:        1250000
