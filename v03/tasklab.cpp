@@ -177,6 +177,10 @@ void TaskGraph::add_task(task t) {
 
     f_t.tID   = ntasks; // id of task
 
+#ifdef DEBUG
+    printf("iterate over task %d...\n", f_t.tID);
+#endif
+
     /* Now, the tricky part: manage dependencies! */
     for (int c = 0; c < t.ndeps; ++c) {
         /* Address of dependency variable */
@@ -193,6 +197,10 @@ void TaskGraph::add_task(task t) {
         ///     become the new "producer", i.e., the last task writing
         ///     reset the readers from the last writing
         if (cur_mode != Type::IN) {
+#ifdef DEBUG
+            printf("\tnot a reader!\n");
+#endif
+
             /* If there was a previous reader */
             if (in_map.find(cur_ptr) != in_map.end()) {
                 /* Become dependent of all previous readers and adjust cur_var */
@@ -218,6 +226,10 @@ void TaskGraph::add_task(task t) {
                 }
 
             } else if (out_map.find(cur_ptr) != out_map.end()) {
+#ifdef DEBUG
+                printf("\ti have a father!\n");
+#endif
+
                 /* No previous reader. If there is a last writer... */
                 uint32_t p_tID = out_map[cur_ptr].task; // parent task ID
                 uint32_t p_dID = out_map[cur_ptr].dID;  // parent dep. ID
@@ -243,6 +255,10 @@ void TaskGraph::add_task(task t) {
             out_map[cur_ptr].type = cur_mode;
             out_map[cur_ptr].dID  = cur_dep;
             out_map[cur_ptr].var  = cur_var;
+
+#ifdef DEBUG
+            printf("\tand my cur_ptr is %lu!\n\n", cur_ptr);
+#endif
 
             /* Reset readers */
             if (in_map.find(cur_ptr) != in_map.end()) {
@@ -693,6 +709,9 @@ bool TaskLab::init_run(const uint8_t rt) {
         omp_task_alloc     = (ta_t)dlsym(RTLD_NEXT, "__kmpc_omp_task_alloc");
         omp_task_with_deps = (td_t)dlsym(RTLD_NEXT, "__kmpc_omp_task_with_deps");
         omp_taskwait       = (tw_t)dlsym(RTLD_NEXT, "__kmpc_omp_taskwait");
+#ifdef TIOGA
+        pretty_dump        = (tp_t)dlsym(RTLD_NEXT, "pretty_dump");
+#endif
     }
 
     /* Was everything ok? */
@@ -901,13 +920,15 @@ void TaskLab::ptask_f(kmp_int32 gtid, void* param) {
     // tparam_t* t = (tparam_t**) *param;
     // tparam_t* p = &t[0];
 
-<<<<<<< HEAD
+#ifdef DEBUG
 	printf("Executed with exec time no. %lf!\n", p->exec);
-=======
-    printf("execution time: %lf\n", p->exec);
->>>>>>> 74dcdccf7a54bb0c093e67c5e806e57d2b31d3b4
+#endif
 
-    //f(*p);
+#ifdef TIOGA
+    pretty_dump();
+#endif
+
+    f(*p);
 }
 
 /* Initialize static helper variables regarding dispatching */
