@@ -11,18 +11,20 @@ OPT_LVL		= -O0
 OBJS		= tasklab.o
 LIB_NAME 	= tasklab.so
 
+CPP		    = g++-4.9
+
 all: 
 	@make ferret 
 	@make tasklab
 
 ferret: $(OBJS)
-	g++ $(CPPFLAGS) $(OBJS) $@.cpp -o $@ $(LIB_FLAGS) 
+	$(CPP) $(CPPFLAGS) $(OBJS) $@.cpp -o $@ $(LIB_FLAGS) 
 
 tasklab: $(OBJS)
-	g++ $(CPPFLAGS) $(OBJS) -shared -o $(LIB_NAME) $(LIB_FLAGS) 
+	$(CPP) $(CPPFLAGS) $(OBJS) -shared -o $(LIB_NAME) $(LIB_FLAGS) 
 
 %.o: %.cpp
-	g++ -c $(CPPFLAGS) $(OPT_LVL) $< -o $@
+	$(CPP) -c $(CPPFLAGS) $(OPT_LVL) $< -o $@
 
 clean:
 	rm -f *.o *.so ferret
