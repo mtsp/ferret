@@ -76,6 +76,8 @@ typedef enum Type    { IN = 1, OUT = 2, INOUT = 3 } Type;
  * Task graph PUBLIC structure
  *   -- users should these structures
  * *************** */
+
+#ifndef __TIOGLIB_H__
 /**
  * dep describes a dependency between tasks
  */
@@ -95,6 +97,7 @@ public:
     int         ndeps;       // number of dependencies of the task
     dep*        deparr;      // list of dependencies of the task
 } task;
+#endif
 
 /* ***************
  * Task graph INTERNAL structure
