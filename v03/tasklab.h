@@ -51,6 +51,9 @@
 /// Uncomment to enter DEBUG mode
 // #define DEBUG                    1
 
+/// Uncomment to compile TASKLAB to run with TIOGA
+// #define TIOGA                    1
+
 /* ***************
  * Trace definitions
  * *************** */
