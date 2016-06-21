@@ -722,6 +722,14 @@ bool TaskLab::init_run(const uint8_t rt) {
 
         return false;
     } else {
+#ifdef TIOGA
+        if (pretty_dump == NULL) {
+            /* Failed */
+            fprintf(stderr, "Please, set LD_PRELOAD accordingly to your runtime.\n");
+
+            return false;
+        }
+#endif
         /* Good to go! */
         return true;
     }
