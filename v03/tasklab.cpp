@@ -372,7 +372,7 @@ bool TaskLab::run(const uint8_t rt) {
         /* Error found, set r_error to its default value */
         r_error = false;
 
-        printf("[ERROR] The graph did not executed correctly!\n")
+        printf("[ERROR] The graph did not executed correctly!\n");
 
         return false;
     } else {
