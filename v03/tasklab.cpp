@@ -346,7 +346,7 @@ void TaskLab::generate(const uint32_t n, const uint32_t m,
 bool TaskLab::run(const uint8_t rt) {
     /* Check if there is a high task graph available to be dispatched */
     if (empty(HTASK)) {
-        fprintf(stderr, "Error: There isn't any graph to be dispatched!\n");
+        fprintf(stderr, "[ERROR] There isn't any graph to be dispatched!\n");
 
         return false;
     }
@@ -371,6 +371,8 @@ bool TaskLab::run(const uint8_t rt) {
     if (r_error) {
         /* Error found, set r_error to its default value */
         r_error = false;
+
+        printf("[ERROR] The graph did not executed correctly!\n")
 
         return false;
     } else {
@@ -440,7 +442,7 @@ void TaskLab::watchEvent(const uint8_t event) {
         /* Set it to be watched */
         t_e[event] = true;
     } else {
-        fprintf(stderr, "Error: Event is not supported.\n");
+        fprintf(stderr, "[ERROR] Event is not supported.\n");
     }
 }
 
@@ -475,7 +477,7 @@ void TaskLab::eventOccurred(const uint8_t event, const void* t_p) {
         }
 
         default:
-            fprintf(stderr, "Error: Event is not supported.\n");
+            fprintf(stderr, "[ERROR] Event is not supported.\n");
     }
 }
 
@@ -485,7 +487,7 @@ void TaskLab::eventOccurred(const uint8_t event, const void* t_p) {
 bool TaskLab::save(const char* filename) {
     /* Check if there is a task graph available */
     if (empty()) {
-        fprintf(stderr, "Error: There isn't any graph to be saved!\n");
+        fprintf(stderr, "[ERROR] There isn't any graph to be saved!\n");
 
         return false;
     }
@@ -501,7 +503,7 @@ bool TaskLab::save(const char* filename) {
 
         oa << tg;
     } else {
-        fprintf(stderr, "Error: Invalid filename. Couldn't save task graph.\n");
+        fprintf(stderr, "[ERROR] Invalid filename. Couldn't save task graph.\n");
 
         delete filename_;
         return false;
@@ -535,7 +537,7 @@ bool TaskLab::restore(const char* filename) {
         tg->tasks.clear();
         ia >> tg;
     } else {
-        fprintf(stderr, "Error: Invalid filename. Couldn't restore task graph.\n");
+        fprintf(stderr, "[ERROR] Invalid filename. Couldn't restore task graph.\n");
 
         /* Throws away */
         delete filename_;
@@ -554,7 +556,7 @@ bool TaskLab::plot(const char* filename, const uint8_t fm) {
     if (fm == Plot::DOT) {
         /* Check if there is a task graph available */
         if (empty(HTASK)) {
-            fprintf(stderr, "Error: There isn't any high level graph to be plotted!\n");
+            fprintf(stderr, "[ERROR] There isn't any high level graph to be plotted!\n");
 
             return false;
         }
@@ -601,7 +603,7 @@ bool TaskLab::plot(const char* filename, const uint8_t fm) {
 
     } else if (fm == LL) {
         if (empty(LTASK)) {
-            fprintf(stderr, "Error: There isn't any low level information to be plotted!\n");
+            fprintf(stderr, "[ERROR] There isn't any low level information to be plotted!\n");
 
             return false;
         }
@@ -622,7 +624,7 @@ bool TaskLab::plot(const char* filename, const uint8_t fm) {
     } else if (fm == INFO) {
         /* Check if there is a task graph available */
         if (empty(HTASK)) {
-            fprintf(stderr, "Error: There isn't any high level information to be displayed!\n");
+            fprintf(stderr, "[ERROR] There isn't any high level information to be displayed!\n");
 
             return false;
         }
@@ -806,8 +808,9 @@ void TaskLab::microtask(int gid, int tid, void* param) {
 
         /* Set first position which will be used as pointer ref. */
         dep_list[0].base_addr = (kmp_intptr) &(params[cur_task]);
-        dep_list[0].len       = 1;
-        dep_list[0].flags.in  = true;
+        dep_list[0].len       = sizeof(params[cur_task]);
+        dep_list[0].flags.in  = true;       // technically, this variable
+                                            // is read at the function
         dep_list[0].flags.out = false;
 
         /* Pointer to our dep_list indexes */
@@ -924,16 +927,13 @@ void TaskLab::ptask_f(kmp_int32 gtid, void* param) {
 
     /* --- get param! --- */
     tparam_t* p = (tparam_t*) md->dep_list[0].base_addr;
-    
-    // tparam_t* t = (tparam_t**) *param;
-    // tparam_t* p = &t[0];
 
 #ifdef DEBUG
 	printf("Executed with exec time no. %lf!\n", p->exec);
-#endif
 
 #ifdef TIOGA
     pretty_dump();
+#endif
 #endif
 
     f(*p);
