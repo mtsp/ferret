@@ -11,7 +11,7 @@ OPT_LVL		= -O0
 OBJS		= tasklab.o
 LIB_NAME 	= tasklab.so
 
-CPP		    = g++-4.9
+CPP		    = g++
 
 all: 
 	@make ferret 

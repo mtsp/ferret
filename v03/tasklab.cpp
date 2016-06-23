@@ -198,7 +198,7 @@ void TaskGraph::add_task(task t) {
         ///     reset the readers from the last writing
         if (cur_mode != Type::IN) {
 #ifdef DEBUG
-            printf("\tnot a reader!\n");
+            printf("\ti'm a writer!\n");
 #endif
 
             /* If there was a previous reader */
@@ -226,13 +226,13 @@ void TaskGraph::add_task(task t) {
                 }
 
             } else if (out_map.find(cur_ptr) != out_map.end()) {
-#ifdef DEBUG
-                printf("\ti have a father!\n");
-#endif
-
                 /* No previous reader. If there is a last writer... */
                 uint32_t p_tID = out_map[cur_ptr].task; // parent task ID
                 uint32_t p_dID = out_map[cur_ptr].dID;  // parent dep. ID
+
+#ifdef DEBUG
+                printf("\ti have a father, at %d!\n", p_tID);
+#endif
 
                 /* Set cur_var according to parent */
                 cur_var = out_map[cur_ptr].var;
@@ -257,7 +257,7 @@ void TaskGraph::add_task(task t) {
             out_map[cur_ptr].var  = cur_var;
 
 #ifdef DEBUG
-            printf("\tand my cur_ptr is %lu!\n\n", cur_ptr);
+            printf("\tand my cur_ptr is %llu!\n\n", cur_ptr);
 #endif
 
             /* Reset readers */
@@ -299,7 +299,7 @@ void TaskGraph::add_task(task t) {
         /* -- add variable as a dependency to our final task */
         /* Successor dependency */
         _dep s_dep = {
-            0,                     // irrelevant, since it doesnt have to re
+            0,                     // irrelevant, since it doesnt have to rely
                                    // on a children task
             cur_mode,              // parent dependency type
             cur_dep,               // parent dependency ID
@@ -806,8 +806,8 @@ void TaskLab::microtask(int gid, int tid, void* param) {
 
         /* Set first position which will be used as pointer ref. */
         dep_list[0].base_addr = (kmp_intptr) &(params[cur_task]);
-        dep_list[0].len       = sizeof(params[cur_task]);
-        dep_list[0].flags.in  = false;
+        dep_list[0].len       = 1;
+        dep_list[0].flags.in  = true;
         dep_list[0].flags.out = false;
 
         /* Pointer to our dep_list indexes */
@@ -956,3 +956,4 @@ const char* TaskLab::add_extension(const char* filename, const char* extension) 
 
     return filename_;
 }
+
