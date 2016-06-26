@@ -7,7 +7,14 @@
 #include "tasklab.h"
 
 #include <cstdio>
-#include <dlfcn.h> // find function symbols
+#include <dlfcn.h>              // find function symbols
+
+#include <boost/filesystem.hpp> // burnin utilities
+
+/* ************************
+ * File management
+ * ************************ */
+namespace fs = boost::filesystem;
 
 /* ************************
  * Dispatch function symbols
@@ -257,7 +264,7 @@ void TaskGraph::add_task(task t) {
             out_map[cur_ptr].var  = cur_var;
 
 #ifdef DEBUG
-            printf("\tand my cur_ptr is %llu!\n\n", cur_ptr);
+            printf("\tand my cur_ptr is %lu!\n\n", cur_ptr);
 #endif
 
             /* Reset readers */
@@ -372,7 +379,7 @@ bool TaskLab::run(const uint8_t rt) {
         /* Error found, set r_error to its default value */
         r_error = false;
 
-        printf("[ERROR] The graph did not executed correctly!\n")
+        printf("[ERROR] The graph did not executed correctly!\n");
 
         return false;
     } else {
@@ -389,7 +396,7 @@ void TaskLab::burnin(const uint32_t nruns, const uint32_t max_t, const uint8_t r
     bool     r = false;
     char     gr_n[100]; // graph name
 
-    int      e = 0;    // keep track of the errors;
+    uint32_t e = 0;     // keep track of the errors;
 
     /* Generate nruns graphs */
     for (i = 0; i < nruns; i++) {
@@ -422,6 +429,55 @@ void TaskLab::burnin(const uint32_t nruns, const uint32_t max_t, const uint8_t r
 '%s'.\n\n", gr_n);
         }
     }
+}
+
+void TaskLab::burnin(const char* path, const uint16_t n, const uint8_t rt) {
+    /* Is the path correct? */
+    if (!fs::exists(path) || !fs::is_directory(path)) {
+        fprintf(stderr, "[ERROR] Directory \"%s\" does not exist.\n", path);
+
+        return;
+    }
+
+    // save graph into internal representation
+    const char* filename_ = "burnin_feedback.txt";
+    std::ofstream ofs (filename_, std::ofstream::out);
+
+    bool r = false;
+    fs::recursive_directory_iterator it(path);
+    fs::recursive_directory_iterator endit;
+
+    while(it != endit)
+    {
+        /* Check if it is a valid file */
+        if (fs::is_regular_file(*it) && it->path().extension() == ".dat") {
+            const char* cur_f = add_extension("/", it->path().stem().c_str());
+            const char* cur_p = add_extension(it->path().parent_path().c_str(), cur_f);
+
+            /* Restore it */
+            restore(cur_p);
+
+            ofs << "Execution of " << cur_p << "\n";
+
+            for (int i = 0; i < n; ++i) {
+                r = run(rt);
+
+                if (!r) {
+                    ofs << "\t" << i + 1 << ": failed.\n";
+                } else {
+                    ofs << "\t" << i + 1 << ": success! \n";
+                }
+            }
+
+            ofs << "\n";
+        }
+
+        ++it;
+    }
+
+    fprintf(stdout, "Success! Output is at %s\n", filename_);
+
+    ofs.close();
 }
 
 /* ***************
@@ -634,17 +690,13 @@ bool TaskLab::plot(const char* filename, const uint8_t fm) {
 
         std::ofstream ofs (filename_, std::ofstream::out);
 
-        // display information
-        ofs << "Task graph information:\n";
-        ofs << "\tTotal no. of tasks:                     " << tg->ntasks << "\n";
-        ofs << "\tTotal no. of unique dependencies:       " << tg->ndeps << "\n";
-        ofs << "\tStandard amount of iterations per task: " << tg->exec_t << "\n";
-
-        // found information regarding execution time
+        // found information regarding execution time and count of dependencies
         float    max_r    = 0,
                  min_r    = 1;
+        uint32_t dep_c[4] = {0}; 
 
         // what is the min. and max. execution time from all tasks?
+        // types of dependencies
         std::vector<_task>::iterator it;
         for (it = tg->tasks.begin(); it != tg->tasks.end(); ++it) {
             if (it->exec > max_r) {
@@ -654,7 +706,32 @@ bool TaskLab::plot(const char* filename, const uint8_t fm) {
             if (it->exec < min_r) {
                 min_r = it->exec;
             }
+
+            // if there are successors on the following task...
+            //   check dependencies!
+            if (!it->successors.empty()) {
+                std::list<_dep>::const_iterator itt;
+
+                for (itt = it->successors.begin(); 
+                    itt != it->successors.end(); ++itt) {
+                    ++dep_c[itt->type];
+                }
+            }
         }
+
+        // display information
+        ofs << "--- Task graph general information                    ---\n";
+        ofs << "\tTotal no. of tasks:                     " << tg->ntasks << "\n";
+        ofs << "\tTotal no. of variables:                 " << tg->nvar << "\n";
+        ofs << "\tTotal no. of unique dependencies:       " << tg->ndeps << "\n";
+
+
+        ofs << "\t\tin:                                 " << dep_c[Type::IN] << "\n";
+        ofs << "\t\tinout:                              " << dep_c[Type::INOUT] << "\n";
+        ofs << "\t\tout:                                " << dep_c[Type::OUT] << "\n";
+
+        ofs << "\n--- Information regarding randomly generated graphs ---\n";
+        ofs << "\tStandard amount of iterations per task: " << tg->exec_t << "\n";
 
         ofs << "\tMinimum amount of iterations is:        " << std::fixed << 
                std::setprecision(0) << (tg->exec_t * min_r) + tg->exec_t << "\n";

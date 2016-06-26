@@ -5,7 +5,7 @@ else
 endif
 
 CPPFLAGS	= -g -std=c++11 -I$(MTSP_INC) -fPIC
-LIB_FLAGS  	= -lm -ldl -lboost_serialization
+LIB_FLAGS  	= -lm -ldl -lboost_serialization -lboost_filesystem -lboost_system
 OPT_LVL		= -O0
 
 OBJS		= tasklab.o

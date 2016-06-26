@@ -49,10 +49,10 @@
 #define EVENT_S                  3                 // total events+1: HTASK LTASK
 
 /// Uncomment to enter DEBUG mode
-#define DEBUG                    1
+// #define DEBUG                    1
 
 /// Uncomment to compile TASKLAB to run with TIOGA
-#define TIOGA                    1
+// #define TIOGA                    1
 
 /* ***************
  * Trace definitions
@@ -297,6 +297,14 @@ public:
      *  rt      is the runtime that will be used for dispatching
      */
     void burnin(const uint32_t nruns, const uint32_t max_t, const uint8_t rt);
+
+    /*
+     * Restores multiple task graphs from .dag files in a given folder and
+     * dispatch them to runtime of choice.
+     *  path  is the (full) path to the directory
+     *  n     is how many times should we run each task graph
+     */
+    void burnin(const char* path, uint16_t n, const uint8_t rt); 
 
     /* ***************
      * Trace functions
