@@ -146,7 +146,7 @@ void TaskGraph::describe_deps(const uint32_t tID, uint32_t* dep_id,
         results.push_back(it->task);
 
         // Set a random type for the dependency, either IN or INOUT
-        it->type = Type(rand() % 2);
+        it->type = Type(rand() % 2) == 0 ? 1 : 3;
         it->dID = it->var = *dep_id;
 
         // Set itself as a successor dependency (in case someone relies 
@@ -404,8 +404,8 @@ void TaskLab::burnin(const uint32_t nruns, const uint32_t max_t, const uint8_t r
         srand(time(NULL) + i);
 
         n = rand() % max_t + 1;
-        m = rand() % n/2 + 1;
-        d = rand() % n + 1;
+        m = rand() % 30;        // set number of dependencies
+        d = rand() % 20;        // set max. distance from predecessor
 
         fprintf(stdout, "%u) Generating task graph of %d tasks...\n", i, n);
 
