@@ -138,7 +138,8 @@ void TaskGraph::describe_deps(const uint32_t tID, uint32_t* dep_id,
         it != tasks[tID].predecessors.end(); ++it) {
         // Define a task that hasn't been picket yet
         do {
-            it->task = min + (rand() % (max - min));
+            it->task = max != min ? min + (rand() % (max - min))
+                                    : min;
         } while (std::find(results.begin(), results.end(), it->task) 
             != results.end());
 
@@ -420,10 +421,10 @@ void TaskLab::burnin(const uint32_t nruns, const uint32_t max_t, const uint8_t r
             sprintf(gr_n, "%s_failed_%04d", DEFAULT_NAME, e++);
 
             /* Save graph as both formats */
-            save(add_extension(DEFAULT_NAME, gr_n));
-            plot(add_extension(DEFAULT_NAME, gr_n), DOT);
-            plot(add_extension(DEFAULT_NAME, gr_n), LL);
-            plot(add_extension(DEFAULT_NAME, gr_n), INFO);
+            save(gr_n);
+            plot(gr_n, DOT);
+            plot(gr_n, LL);
+            plot(gr_n, INFO);
 
             fprintf(stderr, "Execution failed!\n\tFile saved and plotted as \
 '%s'.\n\n", gr_n);
@@ -720,7 +721,7 @@ bool TaskLab::plot(const char* filename, const uint8_t fm) {
         }
 
         // display information
-        ofs << "--- Task graph general information                    ---\n";
+        ofs << "--- Task graph general information              \t---\n";
         ofs << "\tTotal no. of tasks:                     " << tg->ntasks << "\n";
         ofs << "\tTotal no. of variables:                 " << tg->nvar << "\n";
         ofs << "\tTotal no. of unique dependencies:       " << tg->ndeps << "\n";
@@ -730,7 +731,7 @@ bool TaskLab::plot(const char* filename, const uint8_t fm) {
         ofs << "\t\tinout:                              " << dep_c[Type::INOUT] << "\n";
         ofs << "\t\tout:                                " << dep_c[Type::OUT] << "\n";
 
-        ofs << "\n--- Information regarding randomly generated graphs ---\n";
+        ofs << "\n--- Information regarding randomly generated graphs \t---\n";
         ofs << "\tStandard amount of iterations per task: " << tg->exec_t << "\n";
 
         ofs << "\tMinimum amount of iterations is:        " << std::fixed << 
