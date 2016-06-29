@@ -153,6 +153,7 @@ public:
     bool run(const uint8_t rt);
 
     void burnin(const uint32_t nruns, const uint32_t max_t, const uint8_t rt);
+    void burnin(const char* path, uint16_t n, const uint8_t rt);
 
     bool hasEvent(uint8_t event);
     void watchEvent(uint8_t event);
@@ -188,6 +189,9 @@ Dispatches a current loaded graph to the \texttt{rt} runtime, displaying on-the-
 \item \texttt{void TaskLab::burnin(const uint32\_t nruns, const uint32\_t max\_t, const uint8\_t rt)} \newline
 This method is responsible for generating and dispatching to the \texttt{rt} runtime a total of \texttt{nruns} random task graphs, within a limit of \texttt{max\_t} tasks by graph. It displays output for each task graph and if the simulation ran correctly.
 
+\item \texttt{void TaskLab::burnin(const char* path, uint16\_t n, const uint8\_t rt)} \newline
+Similar to the method above. It restores multiple task graphs from \texttt{.dat} files in a given \texttt{path} and dispatch them \texttt{n} times to \texttt{rt} runtime. The feedback for each file (i.e. whether if it ran successfully or not) is displayed at a file named \texttt{burnin\_feedback.txt}.
+
 \item\texttt{bool TaskLab::hasEvent(const uint8\_t event)} \newline
 Checks if an \texttt{event} is currently being watched by the API - if so, returns true, otherwise false.
 
@@ -207,7 +211,7 @@ Save a graph as a \textit{.dat} file, by serializing it. It takes as parameter t
 This method is responsible for retrieving a graph stored as a \textit{.dat} file, by deserializing it. It takes as parameter the \texttt{filename} of the serialized graph file. Returns if deserialization was successful.
 
 \item \texttt{bool TaskLab::plot(const char* filename)} \newline
-Save a graph as three specified formats: a \textit{.dot} file, allowing to visualize the task graph; a \textit{.tsk} file, displaying the low level trace information regarding the task graph (it implies that the task graph was previously traced); a \textit{.info} file, displaying information regarding the task graph, i.e. number of dependencies and tasks. 
+Save a graph as three specified formats: a \textit{.dot} file, allowing to visualize the task graph; a \textit{.tsk} file, displaying the low level trace information regarding the task graph (it implies that the task graph was previously traced); a \textit{.info} file, displaying information regarding the task graph, i.e. number and type of dependencies and tasks. 
 
 The method takes as parameter the corresponding \texttt{filename} of the graph. Returns if the plot was successful. 
 
@@ -222,9 +226,9 @@ The generation of the task graph works as follows: first, the graph is created w
 The execution of the graph is validated by creating a boolean list with all the dependencies of the graph based on its unique id, assigned initially to false. It consists of: when a task executes, it assigns all of its successors' dependency as true. Then, if a task executes and all of its predecessors' dependency is defined as true, it means that is safe to execute, i.e. all of its father tasks have already executed; otherwise, the execution is not correct. If every task executed correctly, it means that the graph is validated and successfully executed.
 
 \subsection{Task tracing procedure}
-The task tracing procedure consists in a runtime communication with the TaskLab API. Basically, an environment variable EVT\_VAR must be set with the event to be traced: high level task or low level task. When the MTSP is initialized, it verifies if the environment variable is enabled. If so, it uses a TaskLab object to enable the following event (calling \texttt{watchEvent()} method). The communication proceeds to be established relying on the TaskLab API. 
+The task tracing procedure consists in a runtime communication with the TaskLab API. Basically, an environment variable EVT\_VAR must be set with the event to be traced: high level task or low level task. When the MTSP is initialized, it verifies if the environment variable is enabled. If so, it uses a TaskLab object in order to enable the following event (calling \texttt{watchEvent()} method). The communication proceeds to be established relying on the TaskLab API. 
 
-If the user wants to trace high level tasks, the runtime must send a structure relative to \texttt{task} and \texttt{dep} structure for each dispatched task; if user wants to trace low level tasks, the runtime must send packets with TIOGA \cite{TIOGA} intermediate format. When the execution is finished, it must serialize the TaskLab object as a temporary object, saved (by default) at \textit{/tmp/taskgraph.dat}. The Ferret, which is a TaskLab client, simply deserializes this object and successfully completes the tracing.
+If the user wants to trace high level tasks, the runtime must send a structure relative to \texttt{task} and \texttt{dep} structure for each dispatched task; if user chooses to trace low level tasks, the runtime must send packets with TIOGA \cite{TIOGA} intermediate format. When the execution is finished, it must serialize the TaskLab object as a temporary object, saved (by default) at \textit{/tmp/taskgraph.dat}. The Ferret, which is a TaskLab client, simply deserializes this object and successfully completes the tracing.
 
 \section{Internal TaskLab API}
 The following TaskLab API describes version 0.4 under its internal point of view.
@@ -285,12 +289,12 @@ private:
 \end{verbatim}
 
 \section{Ferret}
-Ferret is a TaskLab client created to enable a smoother communication between the user and the TaskLab API. It plays a role of a debugger for task parallelized applications and simulations in general. The usage is described as follows: \\
+Ferret is a high level TaskLab client created to enable a smoother communication between the user and the TaskLab API. It plays a role of a debugger for task parallelized applications and simulations in general. The usage is described as follows: \\
 
 \begin{easylist}
     & `Generate' in order to generate a random task graph;
     & `Run'      in order to run a current loaded task graph;
-    & `Burnin'   in order to generate multiple task graphs and run them;
+    & `Burnin'   in order to run multiple task graphs (from randomly generated to \texttt{.dat} task graphs);
     & `Trace'    in order to trace a program or a task graph;
     & `Save'     to save a current loaded task graph;
     & `Restore'  to restore and load a saved task graph;
@@ -298,7 +302,7 @@ Ferret is a TaskLab client created to enable a smoother communication between th
 \end{easylist}
 
 \section{Next Steps}
-The v0.5 release of the TaskLab is currently under development. Some features that it will provide are:
+The v0.4 release of the TaskLab is currently under development. Some features that it will provide are:
  \begin{itemize}
 \item Compatibility with other runtimes;
 \item More customization regarding graph generation;

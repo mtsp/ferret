@@ -29,8 +29,8 @@ void instructions() {
     std::cout << "Available options:\n";
     std::cout << " \"generate\" or \"g\" in order to generate a random task graph;\n";
     std::cout << " \"run\"      or \"r\" in order to run a current loaded task graph;\n";
-    std::cout << " \"burnin\"   or \"b\" in order to generate multiple task graphs and run them;\n";
-    std::cout << " \"trace\"    or \"t\" in order to trace a program;\n";
+    std::cout << " \"burnin\"   or \"b\" in order to run multiple task graphs (from randomly generated task graphs to data files);\n";
+    std::cout << " \"trace\"    or \"t\" in order to trace a program or a task graph;\n";
     std::cout << " \"save\"     or \"s\" to save a current loaded task graph;\n";
     std::cout << " \"restore\"  or \"x\" to restore and load a saved task graph;\n";
     std::cout << " \"plot\"     or \"p\" to plot a current loaded task graph.\n";

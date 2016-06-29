@@ -348,10 +348,10 @@ public:
     bool restore(const char* filename);
 
     /**
-     * Save a graph as a .dot or .tsk file
+     * Save a graph as a .dot, .tsk or .info file
      *  filename: name of the file
-     *  info:     format to be printed (HTASK for high level 
-     *            and LTASK for low level)
+     *  info:     format to be printed (dot for high level,
+     *            ll for low level or info for graph information)
      *  return:   true if it succeeds, else false
      */
     bool plot(const char* filename, const uint8_t info);
