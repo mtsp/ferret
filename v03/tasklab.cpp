@@ -458,6 +458,7 @@ void TaskLab::burnin(const char* path, const uint16_t n, const uint8_t rt) {
             /* Restore it */
             restore(cur_p);
 
+			std::cout << "Executing " << cur_p << "\n";
             ofs << "Execution of " << cur_p << "\n";
 
             for (int i = 0; i < n; ++i) {
@@ -919,9 +920,12 @@ void TaskLab::microtask(int gid, int tid, void* param) {
             ++cur_pred;
         }
 
+#ifdef DEBUG
         /* Finally, dispatch task! */
         std::cout << "\tdispatching task " << cur_task << "\n";
-        omp_task_with_deps(NULL, 0, task, n_dep + 1, dep_list, 0, NULL);
+#endif
+
+		omp_task_with_deps(NULL, 0, task, n_dep + 1, dep_list, 0, NULL);
 
         /* Clean up the mess */
         delete dep_list;
