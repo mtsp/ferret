@@ -1,28 +1,30 @@
 ifeq ($(HOSTNAME), chiclete)
         MTSP_INC = $(HOME)/mtsp/v06
 else
-        MTSP_INC = $(HOME)/Isaland/mtsp/v06
+        MTSP_INC = $(HOME)/Isaland/mtsp/integration
 endif
 
 CPPFLAGS	= -g -std=c++11 -I$(MTSP_INC) -fPIC
-LIB_FLAGS  	= -lm -ldl -lboost_serialization
+LIB_FLAGS  	= -lm -ldl -lboost_serialization -lboost_filesystem -lboost_system
 OPT_LVL		= -O0
 
 OBJS		= tasklab.o
 LIB_NAME 	= tasklab.so
+
+CPP		    = g++
 
 all: 
 	@make ferret 
 	@make tasklab
 
 ferret: $(OBJS)
-	g++ $(CPPFLAGS) $(OBJS) $@.cpp -o $@ $(LIB_FLAGS) 
+	$(CPP) $(CPPFLAGS) $(OBJS) $@.cpp -o $@ $(LIB_FLAGS) 
 
 tasklab: $(OBJS)
-	g++ $(CPPFLAGS) $(OBJS) -shared -o $(LIB_NAME) $(LIB_FLAGS) 
+	$(CPP) $(CPPFLAGS) $(OBJS) -shared -o $(LIB_NAME) $(LIB_FLAGS) 
 
 %.o: %.cpp
-	g++ -c $(CPPFLAGS) $(OPT_LVL) $< -o $@
+	$(CPP) -c $(CPPFLAGS) $(OPT_LVL) $< -o $@
 
 clean:
 	rm -f *.o *.so ferret

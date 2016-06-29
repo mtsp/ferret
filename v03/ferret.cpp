@@ -17,8 +17,9 @@
 #define INVALID 0
 #define EXIT   -1
 
-typedef enum { UINT, FLOAT, RUNTIME, EVENT, PLOT, TRACE } tp;
+typedef enum { UINT, FLOAT, RUNTIME, EVENT, PLOT, TRACE, BURNIN } tp;
 typedef enum { APP = 1, TG = 2 } tr;
+typedef enum { RANDOM = 1, DATA = 2 } bi;
 
 /* ************************
  * Software interface
@@ -28,8 +29,8 @@ void instructions() {
     std::cout << "Available options:\n";
     std::cout << " \"generate\" or \"g\" in order to generate a random task graph;\n";
     std::cout << " \"run\"      or \"r\" in order to run a current loaded task graph;\n";
-    std::cout << " \"burnin\"   or \"b\" in order to generate multiple task graphs and run them;\n";
-    std::cout << " \"trace\"    or \"t\" in order to trace a program;\n";
+    std::cout << " \"burnin\"   or \"b\" in order to run multiple task graphs (from randomly generated task graphs to data files);\n";
+    std::cout << " \"trace\"    or \"t\" in order to trace a program or a task graph;\n";
     std::cout << " \"save\"     or \"s\" to save a current loaded task graph;\n";
     std::cout << " \"restore\"  or \"x\" to restore and load a saved task graph;\n";
     std::cout << " \"plot\"     or \"p\" to plot a current loaded task graph.\n";
@@ -135,6 +136,14 @@ int read(const char* str, bool opt, uint8_t t, T* r) {
                      strcasecmp("T", buf) == 0) {
                 *r = tr::TG;
 
+            }
+        } else if (t == tp::BURNIN) {
+            if (strcasecmp("Random", buf) == 0 || 
+                strcasecmp("r", buf) == 0) {
+                *r = bi::RANDOM;
+            } else if (strcasecmp("Data", buf) == 0 ||
+                strcasecmp("d", buf) == 0) {
+                *r = bi::DATA;
             }
         }
 
@@ -242,26 +251,59 @@ iterations: (OPTIONAL, default is %d) ", DEFAULT_EXECUTION_SIZE);
 
             case 'b':
                 {
-                uint32_t nruns;
-                uint32_t max_t;
-                uint8_t  rt;
+                uint8_t bi_t;
 
-                sprintf(buf, "\tNumber of graphs to be generated: ");
-                if (read(buf, false, tp::UINT, &nruns) == EXIT) {
+                sprintf(buf, "\tRandom or data (randomly generates task graphs or stress from existing data): ");
+                if (read(buf, false, tp::BURNIN, &bi_t) == EXIT) {
                     break;
                 }
 
-                sprintf(buf, "\tMax. no. of tasks that a graph may obtain: ");
-                if (read(buf, false, tp::UINT, &max_t) == EXIT) {
-                    break;
-                }
+                if (bi_t == RANDOM) {
+                    uint32_t nruns;
+                    uint32_t max_t;
+                    uint8_t  rt;
 
-                sprintf(buf, "\tRuntime that will be used for dispatching: ");
-                if (read(buf, false, tp::RUNTIME, &rt) == EXIT) {
-                    break;
-                }
+                    sprintf(buf, "\tNumber of graphs to be generated: ");
+                    if (read(buf, false, tp::UINT, &nruns) == EXIT) {
+                        break;
+                    }
 
-                tl.burnin(nruns, max_t, rt);
+                    sprintf(buf, "\tMax. no. of tasks that a graph may obtain: ");
+                    if (read(buf, false, tp::UINT, &max_t) == EXIT) {
+                        break;
+                    }
+
+                    sprintf(buf, "\tRuntime that will be used for dispatching: ");
+                    if (read(buf, false, tp::RUNTIME, &rt) == EXIT) {
+                        break;
+                    }
+
+                    tl.burnin(nruns, max_t, rt);
+
+                } else {
+                    char a_path[256];
+                    uint32_t nruns;
+                    uint8_t  rt;
+
+                    std::cout << "\tPath of the database: ";
+                    std::cin >> a_path;
+
+                    /* Garbage */
+                    getchar();
+
+                    sprintf(buf, "\tMax. no. of iterations per file: ");
+                    if (read(buf, false, tp::UINT, &nruns) == EXIT) {
+                        break;
+                    }
+
+                    sprintf(buf, "\tRuntime that will be used for dispatching: ");
+                    if (read(buf, false, tp::RUNTIME, &rt) == EXIT) {
+                        break;
+                    }
+
+                    tl.burnin(a_path, nruns, rt);
+
+                }
                 }
 
                 break;

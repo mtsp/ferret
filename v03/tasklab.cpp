@@ -7,7 +7,14 @@
 #include "tasklab.h"
 
 #include <cstdio>
-#include <dlfcn.h> // find function symbols
+#include <dlfcn.h>              // find function symbols
+
+#include <boost/filesystem.hpp> // burnin utilities
+
+/* ************************
+ * File management
+ * ************************ */
+namespace fs = boost::filesystem;
 
 /* ************************
  * Dispatch function symbols
@@ -131,7 +138,8 @@ void TaskGraph::describe_deps(const uint32_t tID, uint32_t* dep_id,
         it != tasks[tID].predecessors.end(); ++it) {
         // Define a task that hasn't been picket yet
         do {
-            it->task = min + (rand() % (max - min));
+            it->task = max != min ? min + (rand() % (max - min))
+                                    : min;
         } while (std::find(results.begin(), results.end(), it->task) 
             != results.end());
 
@@ -139,7 +147,7 @@ void TaskGraph::describe_deps(const uint32_t tID, uint32_t* dep_id,
         results.push_back(it->task);
 
         // Set a random type for the dependency, either IN or INOUT
-        it->type = Type(rand() % 2);
+        it->type = Type(rand() % 2) == 0 ? 1 : 3;
         it->dID = it->var = *dep_id;
 
         // Set itself as a successor dependency (in case someone relies 
@@ -177,6 +185,10 @@ void TaskGraph::add_task(task t) {
 
     f_t.tID   = ntasks; // id of task
 
+#ifdef DEBUG
+    printf("iterate over task %d...\n", f_t.tID);
+#endif
+
     /* Now, the tricky part: manage dependencies! */
     for (int c = 0; c < t.ndeps; ++c) {
         /* Address of dependency variable */
@@ -193,6 +205,10 @@ void TaskGraph::add_task(task t) {
         ///     become the new "producer", i.e., the last task writing
         ///     reset the readers from the last writing
         if (cur_mode != Type::IN) {
+#ifdef DEBUG
+            printf("\ti'm a writer!\n");
+#endif
+
             /* If there was a previous reader */
             if (in_map.find(cur_ptr) != in_map.end()) {
                 /* Become dependent of all previous readers and adjust cur_var */
@@ -222,6 +238,10 @@ void TaskGraph::add_task(task t) {
                 uint32_t p_tID = out_map[cur_ptr].task; // parent task ID
                 uint32_t p_dID = out_map[cur_ptr].dID;  // parent dep. ID
 
+#ifdef DEBUG
+                printf("\ti have a father, at %d!\n", p_tID);
+#endif
+
                 /* Set cur_var according to parent */
                 cur_var = out_map[cur_ptr].var;
 
@@ -243,6 +263,10 @@ void TaskGraph::add_task(task t) {
             out_map[cur_ptr].type = cur_mode;
             out_map[cur_ptr].dID  = cur_dep;
             out_map[cur_ptr].var  = cur_var;
+
+#ifdef DEBUG
+            printf("\tand my cur_ptr is %lu!\n\n", cur_ptr);
+#endif
 
             /* Reset readers */
             if (in_map.find(cur_ptr) != in_map.end()) {
@@ -283,7 +307,7 @@ void TaskGraph::add_task(task t) {
         /* -- add variable as a dependency to our final task */
         /* Successor dependency */
         _dep s_dep = {
-            0,                     // irrelevant, since it doesnt have to re
+            0,                     // irrelevant, since it doesnt have to rely
                                    // on a children task
             cur_mode,              // parent dependency type
             cur_dep,               // parent dependency ID
@@ -330,7 +354,7 @@ void TaskLab::generate(const uint32_t n, const uint32_t m,
 bool TaskLab::run(const uint8_t rt) {
     /* Check if there is a high task graph available to be dispatched */
     if (empty(HTASK)) {
-        fprintf(stderr, "Error: There isn't any graph to be dispatched!\n");
+        fprintf(stderr, "[ERROR] There isn't any graph to be dispatched!\n");
 
         return false;
     }
@@ -356,6 +380,8 @@ bool TaskLab::run(const uint8_t rt) {
         /* Error found, set r_error to its default value */
         r_error = false;
 
+        printf("[ERROR] The graph did not executed correctly!\n");
+
         return false;
     } else {
         /* Everything went fine! */
@@ -371,7 +397,7 @@ void TaskLab::burnin(const uint32_t nruns, const uint32_t max_t, const uint8_t r
     bool     r = false;
     char     gr_n[100]; // graph name
 
-    int      e = 0;    // keep track of the errors;
+    uint32_t e = 0;     // keep track of the errors;
 
     /* Generate nruns graphs */
     for (i = 0; i < nruns; i++) {
@@ -379,8 +405,8 @@ void TaskLab::burnin(const uint32_t nruns, const uint32_t max_t, const uint8_t r
         srand(time(NULL) + i);
 
         n = rand() % max_t + 1;
-        m = rand() % n/2 + 1;
-        d = rand() % n + 1;
+        m = rand() % 30;        // set number of dependencies
+        d = rand() % 20;        // set max. distance from predecessor
 
         fprintf(stdout, "%u) Generating task graph of %d tasks...\n", i, n);
 
@@ -395,15 +421,64 @@ void TaskLab::burnin(const uint32_t nruns, const uint32_t max_t, const uint8_t r
             sprintf(gr_n, "%s_failed_%04d", DEFAULT_NAME, e++);
 
             /* Save graph as both formats */
-            save(add_extension(DEFAULT_NAME, gr_n));
-            plot(add_extension(DEFAULT_NAME, gr_n), DOT);
-            plot(add_extension(DEFAULT_NAME, gr_n), LL);
-            plot(add_extension(DEFAULT_NAME, gr_n), INFO);
+            save(gr_n);
+            plot(gr_n, DOT);
+            plot(gr_n, LL);
+            plot(gr_n, INFO);
 
             fprintf(stderr, "Execution failed!\n\tFile saved and plotted as \
 '%s'.\n\n", gr_n);
         }
     }
+}
+
+void TaskLab::burnin(const char* path, const uint16_t n, const uint8_t rt) {
+    /* Is the path correct? */
+    if (!fs::exists(path) || !fs::is_directory(path)) {
+        fprintf(stderr, "[ERROR] Directory \"%s\" does not exist.\n", path);
+
+        return;
+    }
+
+    // save graph into internal representation
+    const char* filename_ = "burnin_feedback.txt";
+    std::ofstream ofs (filename_, std::ofstream::out);
+
+    bool r = false;
+    fs::recursive_directory_iterator it(path);
+    fs::recursive_directory_iterator endit;
+
+    while(it != endit)
+    {
+        /* Check if it is a valid file */
+        if (fs::is_regular_file(*it) && it->path().extension() == ".dat") {
+            const char* cur_f = add_extension("/", it->path().stem().c_str());
+            const char* cur_p = add_extension(it->path().parent_path().c_str(), cur_f);
+
+            /* Restore it */
+            restore(cur_p);
+
+            ofs << "Execution of " << cur_p << "\n";
+
+            for (int i = 0; i < n; ++i) {
+                r = run(rt);
+
+                if (!r) {
+                    ofs << "\t" << i + 1 << ": failed.\n";
+                } else {
+                    ofs << "\t" << i + 1 << ": success! \n";
+                }
+            }
+
+            ofs << "\n";
+        }
+
+        ++it;
+    }
+
+    fprintf(stdout, "Success! Output is at %s\n", filename_);
+
+    ofs.close();
 }
 
 /* ***************
@@ -424,7 +499,7 @@ void TaskLab::watchEvent(const uint8_t event) {
         /* Set it to be watched */
         t_e[event] = true;
     } else {
-        fprintf(stderr, "Error: Event is not supported.\n");
+        fprintf(stderr, "[ERROR] Event is not supported.\n");
     }
 }
 
@@ -459,7 +534,7 @@ void TaskLab::eventOccurred(const uint8_t event, const void* t_p) {
         }
 
         default:
-            fprintf(stderr, "Error: Event is not supported.\n");
+            fprintf(stderr, "[ERROR] Event is not supported.\n");
     }
 }
 
@@ -469,7 +544,7 @@ void TaskLab::eventOccurred(const uint8_t event, const void* t_p) {
 bool TaskLab::save(const char* filename) {
     /* Check if there is a task graph available */
     if (empty()) {
-        fprintf(stderr, "Error: There isn't any graph to be saved!\n");
+        fprintf(stderr, "[ERROR] There isn't any graph to be saved!\n");
 
         return false;
     }
@@ -485,7 +560,7 @@ bool TaskLab::save(const char* filename) {
 
         oa << tg;
     } else {
-        fprintf(stderr, "Error: Invalid filename. Couldn't save task graph.\n");
+        fprintf(stderr, "[ERROR] Invalid filename. Couldn't save task graph.\n");
 
         delete filename_;
         return false;
@@ -519,7 +594,7 @@ bool TaskLab::restore(const char* filename) {
         tg->tasks.clear();
         ia >> tg;
     } else {
-        fprintf(stderr, "Error: Invalid filename. Couldn't restore task graph.\n");
+        fprintf(stderr, "[ERROR] Invalid filename. Couldn't restore task graph.\n");
 
         /* Throws away */
         delete filename_;
@@ -538,7 +613,7 @@ bool TaskLab::plot(const char* filename, const uint8_t fm) {
     if (fm == Plot::DOT) {
         /* Check if there is a task graph available */
         if (empty(HTASK)) {
-            fprintf(stderr, "Error: There isn't any high level graph to be plotted!\n");
+            fprintf(stderr, "[ERROR] There isn't any high level graph to be plotted!\n");
 
             return false;
         }
@@ -585,7 +660,7 @@ bool TaskLab::plot(const char* filename, const uint8_t fm) {
 
     } else if (fm == LL) {
         if (empty(LTASK)) {
-            fprintf(stderr, "Error: There isn't any low level information to be plotted!\n");
+            fprintf(stderr, "[ERROR] There isn't any low level information to be plotted!\n");
 
             return false;
         }
@@ -606,7 +681,7 @@ bool TaskLab::plot(const char* filename, const uint8_t fm) {
     } else if (fm == INFO) {
         /* Check if there is a task graph available */
         if (empty(HTASK)) {
-            fprintf(stderr, "Error: There isn't any high level information to be displayed!\n");
+            fprintf(stderr, "[ERROR] There isn't any high level information to be displayed!\n");
 
             return false;
         }
@@ -616,17 +691,13 @@ bool TaskLab::plot(const char* filename, const uint8_t fm) {
 
         std::ofstream ofs (filename_, std::ofstream::out);
 
-        // display information
-        ofs << "Task graph information:\n";
-        ofs << "\tTotal no. of tasks:                     " << tg->ntasks << "\n";
-        ofs << "\tTotal no. of unique dependencies:       " << tg->ndeps << "\n";
-        ofs << "\tStandard amount of iterations per task: " << tg->exec_t << "\n";
-
-        // found information regarding execution time
+        // found information regarding execution time and count of dependencies
         float    max_r    = 0,
                  min_r    = 1;
+        uint32_t dep_c[4] = {0}; 
 
         // what is the min. and max. execution time from all tasks?
+        // types of dependencies
         std::vector<_task>::iterator it;
         for (it = tg->tasks.begin(); it != tg->tasks.end(); ++it) {
             if (it->exec > max_r) {
@@ -636,7 +707,32 @@ bool TaskLab::plot(const char* filename, const uint8_t fm) {
             if (it->exec < min_r) {
                 min_r = it->exec;
             }
+
+            // if there are successors on the following task...
+            //   check dependencies!
+            if (!it->successors.empty()) {
+                std::list<_dep>::const_iterator itt;
+
+                for (itt = it->successors.begin(); 
+                    itt != it->successors.end(); ++itt) {
+                    ++dep_c[itt->type];
+                }
+            }
         }
+
+        // display information
+        ofs << "--- Task graph general information              \t---\n";
+        ofs << "\tTotal no. of tasks:                     " << tg->ntasks << "\n";
+        ofs << "\tTotal no. of variables:                 " << tg->nvar << "\n";
+        ofs << "\tTotal no. of unique dependencies:       " << tg->ndeps << "\n";
+
+
+        ofs << "\t\tin:                                 " << dep_c[Type::IN] << "\n";
+        ofs << "\t\tinout:                              " << dep_c[Type::INOUT] << "\n";
+        ofs << "\t\tout:                                " << dep_c[Type::OUT] << "\n";
+
+        ofs << "\n--- Information regarding randomly generated graphs \t---\n";
+        ofs << "\tStandard amount of iterations per task: " << tg->exec_t << "\n";
 
         ofs << "\tMinimum amount of iterations is:        " << std::fixed << 
                std::setprecision(0) << (tg->exec_t * min_r) + tg->exec_t << "\n";
@@ -693,6 +789,9 @@ bool TaskLab::init_run(const uint8_t rt) {
         omp_task_alloc     = (ta_t)dlsym(RTLD_NEXT, "__kmpc_omp_task_alloc");
         omp_task_with_deps = (td_t)dlsym(RTLD_NEXT, "__kmpc_omp_task_with_deps");
         omp_taskwait       = (tw_t)dlsym(RTLD_NEXT, "__kmpc_omp_taskwait");
+#ifdef TIOGA
+        pretty_dump        = (tp_t)dlsym(RTLD_NEXT, "pretty_dump");
+#endif
     }
 
     /* Was everything ok? */
@@ -703,6 +802,14 @@ bool TaskLab::init_run(const uint8_t rt) {
 
         return false;
     } else {
+#ifdef TIOGA
+        if (pretty_dump == NULL) {
+            /* Failed */
+            fprintf(stderr, "Please, set LD_PRELOAD accordingly to your runtime.\n");
+
+            return false;
+        }
+#endif
         /* Good to go! */
         return true;
     }
@@ -780,7 +887,8 @@ void TaskLab::microtask(int gid, int tid, void* param) {
         /* Set first position which will be used as pointer ref. */
         dep_list[0].base_addr = (kmp_intptr) &(params[cur_task]);
         dep_list[0].len       = sizeof(params[cur_task]);
-        dep_list[0].flags.in  = false;
+        dep_list[0].flags.in  = true;       // technically, this variable
+                                            // is read at the function
         dep_list[0].flags.out = false;
 
         /* Pointer to our dep_list indexes */
@@ -895,8 +1003,16 @@ void TaskLab::ptask_f(kmp_int32 gtid, void* param) {
     kmp_task* t = (kmp_task*) param;
     mtsp_task_metadata* md = t->metadata;
 
-    // get correct param
+    /* --- get param! --- */
     tparam_t* p = (tparam_t*) md->dep_list[0].base_addr;
+
+#ifdef DEBUG
+	printf("Executed with exec time no. %lf!\n", p->exec);
+
+#ifdef TIOGA
+    pretty_dump();
+#endif
+#endif
 
     f(*p);
 }
@@ -918,3 +1034,4 @@ const char* TaskLab::add_extension(const char* filename, const char* extension) 
 
     return filename_;
 }
+

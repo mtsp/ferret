@@ -51,6 +51,9 @@
 /// Uncomment to enter DEBUG mode
 // #define DEBUG                    1
 
+/// Uncomment to compile TASKLAB to run with TIOGA
+// #define TIOGA                    1
+
 /* ***************
  * Trace definitions
  * *************** */
@@ -73,6 +76,8 @@ typedef enum Type    { IN = 1, OUT = 2, INOUT = 3 } Type;
  * Task graph PUBLIC structure
  *   -- users should these structures
  * *************** */
+
+#ifndef __TIOGLIB_H__
 /**
  * dep describes a dependency between tasks
  */
@@ -92,6 +97,7 @@ public:
     int         ndeps;       // number of dependencies of the task
     dep*        deparr;      // list of dependencies of the task
 } task;
+#endif
 
 /* ***************
  * Task graph INTERNAL structure
@@ -292,6 +298,14 @@ public:
      */
     void burnin(const uint32_t nruns, const uint32_t max_t, const uint8_t rt);
 
+    /*
+     * Restores multiple task graphs from .dag files in a given folder and
+     * dispatch them to runtime of choice.
+     *  path  is the (full) path to the directory
+     *  n     is how many times should we run each task graph
+     */
+    void burnin(const char* path, uint16_t n, const uint8_t rt); 
+
     /* ***************
      * Trace functions
      * *************** */
@@ -334,10 +348,10 @@ public:
     bool restore(const char* filename);
 
     /**
-     * Save a graph as a .dot or .tsk file
+     * Save a graph as a .dot, .tsk or .info file
      *  filename: name of the file
-     *  info:     format to be printed (HTASK for high level 
-     *            and LTASK for low level)
+     *  info:     format to be printed (dot for high level,
+     *            ll for low level or info for graph information)
      *  return:   true if it succeeds, else false
      */
     bool plot(const char* filename, const uint8_t info);

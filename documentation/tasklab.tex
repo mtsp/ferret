@@ -55,9 +55,13 @@
 \usepackage{graphics, float}
 \usepackage{color, soul}
 \usepackage{multirow}
+\usepackage[ampersand]{easylist}
 
 \newcommand*{\plogo}{\fbox{$\mathcal{PL}$}} % Generic publisher logo
 \newcommand{\hlc}[2][yellow]{ {\sethlcolor{#1} \hl{#2}} }
+
+\ListProperties(Hide=100, Hang=true, Progressive=3ex, Style*=-- , % custom listing
+Style2*=$\bullet$ ,Style3*=$\circ$ ,Style4*=\tiny$\blacksquare$ )
 
 %----------------------------------------------------------------------------------------
 %	TITLE PAGE
@@ -71,7 +75,7 @@
 	\parbox[b]{0.85\textwidth}{ % Paragraph box which restricts text to less than the width of the page
 		
 		{\noindent\Huge\bfseries TaskLab User's Manual }\\[2\baselineskip] % Title
-		{\large \textit{API Specification \\ Release v0.3}}\\[4\baselineskip] % Tagline or further description
+		{\large \textit{API Specification \\ Release v0.4}}\\[4\baselineskip] % Tagline or further description
 		{\Large \textsc{Unicamp Team}\\} % Author name
 		{\date{}}
 		
@@ -115,13 +119,10 @@ TaskLab can be useful to perform a number of jobs related to task parallelism li
   \label{fig:arch}
 \end{figure}
 
-\isadora{I think it needs a paragraph describing "Taquaral" (that's what I've been calling so far, for a lack of better name) and describing its functionality.
-  The figure would need to be remade as well.}
+\section{User's level TaskLab API}
+The following TaskLab API describes version 0.4, by a user's level point of view. It consists of a header file, \textbf{TaskLab.h}, and its implementation, \textbf{TaskLab.cpp}, which contains functionality regarding: DAG generation; run task graphs in the runtime; visualization and (de)serialization of task graphs; trace from real applications.
 
-\section{TaskLab API}
-The following TaskLab API describes version 0.3. It consists of a header file, \textbf{TaskLab.h}, and its implementation, \textbf{TaskLab.cpp}, which contains functionality regarding: DAG generation; run task graphs in the runtime; visualization and (de)serialization of task graphs; trace from real applications.
-
-\subsection{TaskLab data structures}
+\subsection{Data structures}
 \begin{verbatim}
 typedef struct task_s {
 public:
@@ -140,9 +141,100 @@ typedef struct dep_s {
 } dep; 
 \end{verbatim}
 
-Notice that these are the structures visible to the user, which are the same from the TGA Library \cite{TIOGA}. The API, however, use different structures to handle internal data (such as \texttt{\_tasks} and \texttt{\_deps}), but its communication relies only on these structures above. 
+\subsection{Classes}
+Above is the class used by the API, \textbf{TaskLab}, which is Object-Oriented. Notice that, since this is a part from the User's level API, private methods were ommited for a clearer understanding.
 
-For clarification purposes, TaskLab internal structures are defined above.
+\begin{verbatim}
+class TaskLab {
+public:
+    void generate(const uint32_t n, const uint32_t m,
+                  const uint32_t d, const uint32_t t,
+                  const float    r);
+    bool run(const uint8_t rt);
+
+    void burnin(const uint32_t nruns, const uint32_t max_t, const uint8_t rt);
+    void burnin(const char* path, uint16_t n, const uint8_t rt);
+
+    bool hasEvent(uint8_t event);
+    void watchEvent(uint8_t event);
+    void eventOccurred(uint8_t event, void* t);
+
+    bool save(const char* filename);
+    bool restore(const char* filename);
+    bool plot(const char* filename, const uint8_t info);
+
+    bool empty(uint8_t evt);
+}
+\end{verbatim}
+
+\subsection{TaskLab method descriptions}
+Below are the description of \textbf{public} functions available in TaskLab.
+
+\begin{itemize}
+\item \texttt{\noindent void TaskLab::generate \newline
+(const uint32\_t n, const uint32\_t m, const uint32\_t d, \newline
+ const uint32\_t t, const float r)} \newline
+Method responsible for generating a DAG, which represents an application with task parallelism to be simulated. The parameters required for the generation are described below; notice that all the optional parameters have a default value, which can be defined by the user.
+\begin{itemize}
+\item \texttt{n} is the number of tasks to be generated; 
+\item \texttt{m} is the maximum number of IN/INOUT dependencies that has to be created on each task, minimum is 1 by default; 
+\item \texttt{d} sets how far a predecessor may be from a parent (optional); 
+\item \texttt{t} is is the standard execution per task, i.e. amount of iterations (optional); 
+\item \texttt{r} is the maximum range from standard execution per task (from 0 to 1) (optional). 
+\end{itemize}
+
+\item \texttt{void TaskLab::run(const uint8\_t rt)} \newline
+Dispatches a current loaded graph to the \texttt{rt} runtime, displaying on-the-fly information about tasks, and whether if the simulation ran correctly. Its success is defined by checking if the graph was executed in the appropriate order, i.e. it respected the given dependencies. TaskLab communicates with the runtime by calling functions that receives tasks and execute them. Each task calls an arbitrary function which simply awaits for the given load time.
+
+\item \texttt{void TaskLab::burnin(const uint32\_t nruns, const uint32\_t max\_t, const uint8\_t rt)} \newline
+This method is responsible for generating and dispatching to the \texttt{rt} runtime a total of \texttt{nruns} random task graphs, within a limit of \texttt{max\_t} tasks by graph. It displays output for each task graph and if the simulation ran correctly.
+
+\item \texttt{void TaskLab::burnin(const char* path, uint16\_t n, const uint8\_t rt)} \newline
+Similar to the method above. It restores multiple task graphs from \texttt{.dat} files in a given \texttt{path} and dispatch them \texttt{n} times to \texttt{rt} runtime. The feedback for each file (i.e. whether if it ran successfully or not) is displayed at a file named \texttt{burnin\_feedback.txt}.
+
+\item\texttt{bool TaskLab::hasEvent(const uint8\_t event)} \newline
+Checks if an \texttt{event} is currently being watched by the API - if so, returns true, otherwise false.
+
+\item\texttt{void TaskLab::watchEvent(const uint8\_t event)} \newline
+Notifies API to watch an \texttt{event} from a running application, i.e. record task dispatching.
+
+\item\texttt{void TaskLab::eventOccurred(const uint8\_t event, void* t)} \newline
+Method used by the runtime in order to notify API that an event occurred, if necessary. Event is of type \texttt{event} and \texttt{t} is its content. Currently supported types are described below.
+\begin{itemize} 
+\item Event of type \texttt{Evt::TASK}; it receives an parameter \texttt{t} of type \texttt{task}, which is added to the task graph.
+\end{itemize}
+
+\item \texttt{bool TaskLab::save(const char* filename)} \newline
+Save a graph as a \textit{.dat} file, by serializing it. It takes as parameter the \texttt{filename} of the serialized graph file. Returns if serialization was successful.
+
+\item \texttt{bool TaskLab::restore(const char* filename)} \newline
+This method is responsible for retrieving a graph stored as a \textit{.dat} file, by deserializing it. It takes as parameter the \texttt{filename} of the serialized graph file. Returns if deserialization was successful.
+
+\item \texttt{bool TaskLab::plot(const char* filename)} \newline
+Save a graph as three specified formats: a \textit{.dot} file, allowing to visualize the task graph; a \textit{.tsk} file, displaying the low level trace information regarding the task graph (it implies that the task graph was previously traced); a \textit{.info} file, displaying information regarding the task graph, i.e. number and type of dependencies and tasks. 
+
+The method takes as parameter the corresponding \texttt{filename} of the graph. Returns if the plot was successful. 
+
+\item \texttt{bool TaskLab::empty(uint8\_t evt)} \newline
+Simply checks if TaskLab is empty, i.e. has a valid task graph structure of type \texttt{evt}.
+\end{itemize}
+
+\subsection{Task graph generation procedure}
+The generation of the task graph works as follows: first, the graph is created with \texttt{n} tasks, specified by the user. For each created task: a random amount of execution is assigned according to the \texttt{standard execution} and its \texttt{maximum range} - for example, if the default execution size is 1000 and the load range is 0.25, it may vary from 750 to 1250; a random number of dependencies is created, ranging from 1 to \texttt{maximum}, also specified by the user.   Then, each dependency in the task is described as follows: a unique id is assigned, for later on purposes; a predecessor that haven't been picked yet is selected, which its \texttt{maximum distance} is defined according to the parameter of dependency range; the predecessor task receives an OUT dependency, with the same id as the successor dependency, relating both tasks; finally, the dependency is assigned as IN or INOUT, randomly. 
+
+\subsection{Task graph validation procedure}
+The execution of the graph is validated by creating a boolean list with all the dependencies of the graph based on its unique id, assigned initially to false. It consists of: when a task executes, it assigns all of its successors' dependency as true. Then, if a task executes and all of its predecessors' dependency is defined as true, it means that is safe to execute, i.e. all of its father tasks have already executed; otherwise, the execution is not correct. If every task executed correctly, it means that the graph is validated and successfully executed.
+
+\subsection{Task tracing procedure}
+The task tracing procedure consists in a runtime communication with the TaskLab API. Basically, an environment variable EVT\_VAR must be set with the event to be traced: high level task or low level task. When the MTSP is initialized, it verifies if the environment variable is enabled. If so, it uses a TaskLab object in order to enable the following event (calling \texttt{watchEvent()} method). The communication proceeds to be established relying on the TaskLab API. 
+
+If the user wants to trace high level tasks, the runtime must send a structure relative to \texttt{task} and \texttt{dep} structure for each dispatched task; if user chooses to trace low level tasks, the runtime must send packets with TIOGA \cite{TIOGA} intermediate format. When the execution is finished, it must serialize the TaskLab object as a temporary object, saved (by default) at \textit{/tmp/taskgraph.dat}. The Ferret, which is a TaskLab client, simply deserializes this object and successfully completes the tracing.
+
+\section{Internal TaskLab API}
+The following TaskLab API describes version 0.4 under its internal point of view.
+
+\subsection{Data structures}
+Notice that the API use different structures in order to handle its internal data (such as \texttt{\_task} and \texttt{\_dep}), which would be closer to a graph structure.
 
 \begin{verbatim}
 typedef struct dep_i {
@@ -165,12 +257,22 @@ public:
 } _task;
 \end{verbatim}
 
-
-\subsection{TaskLab classes}
-These are the classes used by the API, which is Object-oriented. Private methods were ommited for a clearer understanding.
+\subsection{Classes}
+Below is the TaskGraph class structure, used for task graph management. Notice some private methods were still omitted since they are not relevant to understand the API under its internal point of view.
 
 \begin{verbatim}
 class TaskGraph {
+public:
+    // feed the graph with generated tasks
+    void create_tasks(const uint32_t max_dep);
+
+    // describe dependency between tasks of the graph 
+    void describe_deps(const uint32_t tID, uint32_t* dep_id, 
+                       const uint32_t min, const uint32_t max);
+
+    // add a given task to the graph, solving dependencies
+    void add_task(task t);
+
 private:
     std::vector<_task> tasks;  // tasks structure
     uint32_t  ntasks;          // total number of tasks
@@ -182,96 +284,30 @@ private:
 
     std::map< uint64_t, std::vector<_dep> > in_map;
     std::map< uint64_t, _dep >              out_map;
+    std::vector<uint64_t> ll;  // low level task graph structure
 }
 \end{verbatim}
 
-\begin{verbatim}
-class TaskLab {
-public:
-    void generate(const uint32_t n, const uint32_t m,
-                  const uint32_t d, const uint32_t t,
-                  const float    r);
-    bool run(const uint8_t rt);
+\section{Ferret}
+Ferret is a high level TaskLab client created to enable a smoother communication between the user and the TaskLab API. It plays a role of a debugger for task parallelized applications and simulations in general. The usage is described as follows: \\
 
-    void burnin(const uint32_t nruns, const uint32_t max_t, const uint8_t rt);
-
-    bool hasEvent(uint8_t event);
-    void watchEvent(uint8_t event);
-    void eventOccurred(uint8_t event, void* t);
-
-    void save(const char* filename);
-    void restore(const char* filename);
-    void plot(const char* filename);
-
-private:
-    TaskGraph*          tg;
-
-    bool                t_e[EVENT_S] {0}; // watchable trace events
-
-    static TaskGraph*   tg_t;
-    static bool         r_error;
-}
-\end{verbatim}
-
-\subsection{TaskLab method descriptions}
-Below is the description of \textbf{public} functions available in TaskLab.
-
-\begin{itemize}
-\item \texttt{\noindent void TaskLab::generate \newline
-(const uint32\_t n, const uint32\_t m, const uint32\_t d, \newline
- const uint32\_t t, const float r)} \newline
-Method responsible for generating a DAG, which represents an application with task parallelism to be simulated. The parameters required for the generation are described below; notice that all the optional parameters have a default value, which can be defined by the user.
-\begin{itemize}
-\item \texttt{n} is the number of tasks to be generated; 
-\item \texttt{m} is the maximum number of IN/INOUT dependencies that has to be created on each task, minimum is 1 by default; 
-\item \texttt{d} sets how far a predecessor may be from a parent (optional); 
-\item \texttt{t} is is the standard execution time per task (ms) (optional); 
-\item \texttt{r} is the maximum range from standard load time (from 0 to 1) (optional). 
-\end{itemize}
-
-\item \texttt{void TaskLab::run(const uint8\_t rt)} \newline
-Dispatches a current loaded graph to the \texttt{rt} runtime, displaying on-the-fly information about tasks, and whether if the simulation ran correctly. Its success is defined by checking if the graph was executed in the appropriate order, i.e. it respected the given dependencies. TaskLab communicates with the runtime by calling functions that receives tasks and execute them. Each task calls an arbitrary function which simply awaits for the given load time.
-
-\item \texttt{void TaskLab::burnin(const uint32\_t nruns, const uint32\_t max\_t, const uint8\_t rt)} \newline
-This method is responsible for generating and dispatching to the \texttt{rt} runtime a total of \texttt{nruns} random task graphs, within a limit of \texttt{max\_t} tasks by graph. It displays output for each task graph and if the simulation ran correctly.
-
-\item\texttt{bool TaskLab::hasEvent(const uint8\_t event)} \newline
-Checks if an \texttt{event} is currently being watched by the API - if so, returns true, otherwise false.
-
-\item\texttt{void TaskLab::watchEvent(const uint8\_t event)} \newline
-Notifies API to watch an \texttt{event} from a running application, i.e. record task dispatching.
-
-\item\texttt{void TaskLab::eventOccurred(const uint8\_t event, void* t)} \newline
-Method used by the runtime in order to notify API that an event occurred, if necessary. Event is of type \texttt{event} and \texttt{t} is its content. Currently supported types are described below.
-\begin{itemize} 
-\item Event of type \texttt{Evt::TASK}; it receives an parameter \texttt{t} of type \texttt{task}, which is added to the task graph.
-\end{itemize}
-
-\item \texttt{void TaskLab::save(const char* filename)} \newline
-Save a graph as a \textit{.dat} file, by serializing it. It takes as parameter the \texttt{filename} of the serialized graph file.
-
-\item \texttt{void TaskLab::restore(const char* filename)} \newline
-This method is responsible for retrieving a graph stored as a \textit{.dat} file, by deserializing it. It takes as parameter the \texttt{filename} of the serialized graph file.
-
-\item \texttt{void TaskLab::plot(const char* filename)} \newline
-Save a graph as a \textit{.dot} file, allowing to visualize it. It takes as parameter the corresponding \texttt{filename} of the graph.
-\end{itemize}
-
-\subsection{Task graph generation procedure}
-The generation of the task graph works as follows: first, the graph is created with \texttt{n} tasks, specified by the user. For each created task: a random load time is assigned according to the \texttt{default load time} and its \texttt{maximum range} - for example, if the default load time is 1000 ms and the load range is 0.25, it may vary from 750ms to 1250ms; a random number of dependencies is created, ranging from 1 to \texttt{maximum}, also specified by the user.   Then, each dependency in the task is described as follows: a unique id is assigned, for later on purposes; a predecessor that haven't been picked yet is selected, which its \texttt{maximum distance} is defined according to the parameter of dependency range; the predecessor task receives an OUT dependency, with the same id as the successor dependency, relating both tasks; finally, the dependency is assigned as IN or INOUT, randomly. 
-
-\subsection{Task graph validation procedure}
-The execution of the graph is validated by creating a boolean list with all the dependencies of the graph based on its unique id, assigned initially to false. It consists of: when a task executes, it assigns all of its successors' dependency as true. Then, if a task executes and all of its predecessors' dependency is defined as true, it means that is safe to execute, i.e. all of its father tasks have already executed; otherwise, the execution is not correct. If every task executed correctly, it means that the graph is validated and successfully executed.
-
-\subsection{Task tracing prodecure}
-(TBD)
+\begin{easylist}
+    & `Generate' in order to generate a random task graph;
+    & `Run'      in order to run a current loaded task graph;
+    & `Burnin'   in order to run multiple task graphs (from randomly generated to \texttt{.dat} task graphs);
+    & `Trace'    in order to trace a program or a task graph;
+    & `Save'     to save a current loaded task graph;
+    & `Restore'  to restore and load a saved task graph;
+    & `Plot'     to plot a current loaded task graph.
+\end{easylist}
 
 \section{Next Steps}
-The v0.2 release of the TaskLab is currently user development. Some features that it will provide are:
+The v0.4 release of the TaskLab is currently under development. Some features that it will provide are:
  \begin{itemize}
 \item Compatibility with other runtimes;
 \item More customization regarding graph generation;
-\item Trace capture, storage and replay of task execution. 
+\item More trace options;
+\item Enable to trace multiple options at the same time.
 \end{itemize}
 
 \bibliography{bib/tasklab} 
